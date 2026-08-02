@@ -1,0 +1,2298 @@
+<!DOCTYPE html>
+<!-- saved from url=(0115)file:///C:/Users/UTILISATEUR/Downloads/tony_starter_kit/tuteur_cfo/cours_modelisation_cfo/industriex_dashboard.html -->
+<html lang="fr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Specularé — Business plan, financement &amp; valorisation</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a2540'/%3E%3Ctext x='16' y='23' font-size='20' fill='white' text-anchor='middle' font-family='Georgia,serif'%3ES%3C/text%3E%3C/svg%3E">
+<script src="chart.umd.min.js"></script>
+<style>
+  /* ===== Thème SaaS clair — palette validée (dataviz) ===== */
+  :root{
+    --plane:#f2f3f0; --surface:#ffffff; --surface-2:#f7f7f5;
+    --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
+    --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10);
+    --blue:#2a78d6; --blue-soft:#eaf2fc; --aqua:#1baf7a; --yellow:#eda100;
+    --good:#0ca30c; --good-text:#006300; --critical:#d03b3b; --warning:#fab219;
+    --accent:var(--blue);
+    --shadow:0 1px 2px rgba(11,11,11,.05), 0 1px 3px rgba(11,11,11,.04);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--plane);color:var(--ink)}
+  header{padding:14px 26px;background:var(--surface);border-bottom:1px solid var(--border);
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  header h1{font-size:19px;margin:0;letter-spacing:-.2px;font-weight:700}
+  header .slogan{color:var(--muted);font-size:13px}
+  header .co-sep{color:var(--muted);font-weight:400}
+  #coName{color:var(--blue);border-bottom:1px dashed var(--blue);cursor:text;outline:none;padding:0 2px}
+  #coName:focus{background:var(--blue-soft);border-radius:3px}
+  .hdr-actions{margin-left:auto;display:flex;gap:8px}
+  .btn-export{padding:8px 15px;background:var(--blue);color:#fff;border:none;
+    border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:600}
+  .btn-export:hover{background:#1c5cab}
+  .btn-export.ghost{background:var(--surface);color:var(--blue);border:1px solid var(--blue)}
+  .btn-export.ghost:hover{background:var(--blue-soft)}
+  .print-head{display:none}
+  .wrap{display:grid;grid-template-columns:350px 1fr;gap:0;min-height:calc(100vh - 58px)}
+  /* ---- Panneau gauche ---- */
+  aside{background:var(--surface);border-right:1px solid var(--border);padding:16px;overflow-y:auto;max-height:calc(100vh - 58px)}
+  .aside-h{font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:4px 0 10px;font-weight:700}
+  /* décisions */
+  .dec{border:1px solid var(--border);border-radius:10px;margin-bottom:9px;overflow:hidden;background:var(--surface);transition:.15s}
+  .dec.on{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue)}
+  .dec.on .dec-head{background:var(--blue-soft)}
+  .dec-head{padding:9px 10px;display:flex;align-items:center;gap:8px}
+  .dec-chk{width:16px;height:16px;accent-color:var(--blue);cursor:pointer;flex:none}
+  .dec-name{flex:1;min-width:0;border:1px solid transparent;background:transparent;font-weight:600;font-size:13.5px;color:var(--ink);border-radius:6px;padding:3px 6px;font-family:inherit}
+  .dec-name:hover{border-color:var(--border)}
+  .dec-name:focus{border-color:var(--blue);background:var(--surface);outline:none}
+  .dec-del{flex:none;border:none;background:transparent;cursor:pointer;font-size:13px;opacity:.45;padding:2px 5px;border-radius:6px;line-height:1}
+  .dec-del:hover{opacity:1;background:#fdecec}
+  .dec-add{display:flex;gap:8px;margin-top:6px}
+  .dec-add select{flex:1;min-width:0;padding:7px 8px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--ink);font-size:12.5px;font-family:inherit}
+  .dec-add-btn{flex:none;padding:7px 12px;border:1px dashed var(--blue);background:var(--blue-soft);color:var(--blue);border-radius:8px;cursor:pointer;font-weight:700;font-size:12.5px}
+  .dec-add-btn:hover{background:var(--blue);color:#fff}
+  .dec-body{padding:2px 12px 11px}
+  .dec-desc{font-size:11.5px;color:var(--ink-2);margin:0 0 9px;line-height:1.4}
+  .dp{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
+  .dp label{font-size:12px;color:var(--ink-2);flex:1}
+  .dp select{width:96px;padding:4px 6px;background:var(--surface);border:1px solid var(--border);
+    color:var(--ink);border-radius:6px;font-size:12px;text-align:right}
+  .dp .stepper{margin-left:auto}
+  .dp input:focus,.dp select:focus,.sched input:focus,.ctrl input:focus{outline:2px solid var(--blue-soft);border-color:var(--blue)}
+  .dp-suf{display:none}
+  /* échéancier de financement */
+  .sched{font-size:11.5px}
+  .sched-row{display:grid;grid-template-columns:86px repeat(5,1fr);gap:4px;align-items:center;margin-bottom:5px}
+  .sched-row>span:first-child{color:var(--ink-2)}
+  .sched-head{color:var(--muted);font-weight:600}
+  .sched-head span{text-align:center}
+  .sched input{width:100%;padding:3px 2px;background:var(--surface);border:1px solid var(--border);
+    color:var(--ink);border-radius:5px;font-size:11px;text-align:right;font-variant-numeric:tabular-nums}
+  .sched .note{color:var(--muted);font-size:10.5px;margin-top:4px;line-height:1.35}
+  /* paramètres */
+  details{margin-bottom:9px;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface)}
+  summary{padding:9px 12px;cursor:pointer;font-weight:600;font-size:13px;background:var(--surface-2);color:var(--ink-2);user-select:none}
+  summary:hover{color:var(--ink)}
+  .grp{padding:10px 12px}
+  .ctrl{margin-bottom:11px}
+  .ctrl label{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);margin-bottom:3px}
+  .ctrl label b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+  .ctrl .row{display:flex;align-items:center;gap:8px}
+  .ctrl input[type=range]{flex:1;accent-color:var(--blue)}
+  /* steppers − / + (sélection de nombres facile) */
+  .stepper{display:flex;align-items:center;border:1px solid var(--border);border-radius:7px;overflow:hidden;background:var(--surface)}
+  .st-btn{width:26px;height:26px;border:none;background:var(--surface-2);color:var(--ink-2);font-size:16px;
+    line-height:1;cursor:pointer;font-weight:700;flex:none}
+  .st-btn:hover{background:var(--blue-soft);color:var(--blue)}
+  .numfield{width:62px;padding:3px 4px;border:none;background:transparent;color:var(--ink);
+    font-size:12.5px;text-align:center;font-variant-numeric:tabular-nums}
+  .numfield::-webkit-outer-spin-button,.numfield::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .numfield{-moz-appearance:textfield;appearance:textfield}
+  .stepper.big{border-radius:9px}
+  .stepper.big .st-btn{width:40px;height:40px;font-size:20px}
+  .stepper.big .numfield{width:100%;font-size:15px}
+  /* bouton « par année » + état overridé */
+  .yr-btn{width:30px;height:30px;flex:none;border:1px solid var(--border);background:var(--surface);border-radius:7px;
+    cursor:pointer;font-size:13px;line-height:1;padding:0}
+  .yr-btn:hover{border-color:var(--blue)}
+  .yr-btn.on{background:var(--blue-soft);border-color:var(--blue)}
+  .ctrl.ov-on input[type=range],.ctrl.ov-on .stepper{opacity:.35;pointer-events:none}
+  .ctrl.ov-on label b{color:var(--blue)}
+  /* modale par année */
+  .ym-mode{display:flex;gap:8px;margin-bottom:14px}
+  .ym-apply{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-2);margin-bottom:12px;flex-wrap:wrap}
+  .ym-apply .numfield{width:110px;border:1px solid var(--border);border-radius:6px;padding:4px 6px}
+  .ym-years{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+  .ym-year{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--muted);font-weight:600}
+  .ym-year .numfield{width:100%;border:1px solid var(--border);border-radius:6px;padding:5px 6px;text-align:right}
+  .reset{width:100%;margin-top:6px;padding:9px;background:var(--surface);border:1px solid var(--border);
+    color:var(--ink-2);border-radius:8px;cursor:pointer;font-size:12px;font-weight:600}
+  .reset:hover{color:var(--blue);border-color:var(--blue)}
+  /* bouton + modale financement */
+  .opt-toggle{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-2);
+    padding:8px 2px 4px;cursor:pointer;user-select:none}
+  .opt-toggle input{accent-color:var(--blue);width:15px;height:15px;cursor:pointer}
+  .opt-toggle span{color:var(--muted);font-size:11.5px}
+  .tip{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;
+    background:var(--surface-2);color:var(--muted);font-size:9px;font-style:normal;font-weight:700;
+    margin-left:5px;border:1px solid var(--border);cursor:help;vertical-align:middle;flex:none}
+  .tip:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .fin-open{width:100%;padding:11px 12px;background:var(--surface);border:1px solid var(--border);
+    color:var(--ink);border-radius:9px;cursor:pointer;font-size:13px;font-weight:600;text-align:left}
+  .fin-open:hover{border-color:var(--blue);color:var(--blue)}
+  .modal-overlay{position:fixed;inset:0;background:rgba(11,11,11,.45);display:none;align-items:center;
+    justify-content:center;z-index:50;padding:20px}
+  .modal-overlay.open{display:flex}
+  .modal{background:var(--surface);border-radius:16px;max-width:940px;width:100%;max-height:90vh;overflow-y:auto;
+    box-shadow:0 20px 60px rgba(11,11,11,.3);padding:22px 24px}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+  .modal-head h2{margin:0;font-size:19px}
+  .modal-close{width:34px;height:34px;border:1px solid var(--border);background:var(--surface);border-radius:8px;
+    cursor:pointer;font-size:15px;color:var(--ink-2)}
+  .modal-close:hover{border-color:var(--critical);color:var(--critical)}
+  .modal-sub{color:var(--ink-2);font-size:13px;margin:0 0 18px;line-height:1.5}
+  .fin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px}
+  .fin-year{border:1px solid var(--border);border-radius:12px;padding:14px;background:var(--surface-2)}
+  .fin-year-h{font-size:15px;font-weight:700;color:var(--blue);margin-bottom:8px;text-align:center}
+  .fin-year label{display:block;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;
+    font-weight:600;margin:10px 0 5px}
+  .modal-foot{display:flex;align-items:center;justify-content:space-between;margin-top:20px;gap:12px;flex-wrap:wrap}
+  #finSummary{font-size:13px;color:var(--ink-2)}
+  #finSummary b{color:var(--ink)}
+  .btn-primary{padding:10px 22px;background:var(--blue);color:#fff;border:none;border-radius:9px;
+    cursor:pointer;font-size:13px;font-weight:600}
+  .btn-primary:hover{background:#1c5cab}
+  /* éditeur d'emprunts (modale) */
+  .loan-card{border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px;background:var(--surface-2)}
+  .loan-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .loan-nom{flex:1;font-size:14px;font-weight:700;color:var(--ink);border:1px solid var(--border);
+    border-radius:7px;padding:6px 10px;background:var(--surface)}
+  .loan-nom:focus{outline:2px solid var(--blue-soft);border-color:var(--blue)}
+  .loan-del{width:30px;height:30px;border:1px solid var(--border);background:var(--surface);border-radius:7px;
+    cursor:pointer;color:var(--muted);font-size:13px;flex:none}
+  .loan-del:hover{border-color:var(--critical);color:var(--critical)}
+  .loan-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;align-items:end;margin-bottom:10px}
+  .loan-grid>label{display:flex;flex-direction:column;gap:5px;font-size:11px;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.4px;font-weight:600}
+  .loan-mode{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px;color:var(--ink-2)}
+  .loan-modebtn{padding:5px 12px;border:1px solid var(--border);background:var(--surface);color:var(--ink-2);
+    border-radius:20px;cursor:pointer;font-size:12px;font-weight:600}
+  .loan-modebtn:hover{border-color:var(--blue);color:var(--blue)}
+  .loan-modebtn.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .loan-calc{display:flex;flex-direction:column;justify-content:center;gap:3px;font-size:11px;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.4px;font-weight:600}
+  .loan-calc b{font-size:15px;color:var(--blue);text-transform:none;letter-spacing:0}
+  .loan-sel{padding:5px 8px;border:1px solid var(--border);border-radius:7px;background:var(--surface);
+    color:var(--ink);font-size:13px;font-weight:600;cursor:pointer}
+  .loan-card .stepper{width:100%}
+  .loan-card .numfield{width:100%}
+  /* références produits */
+  .ref-summary{margin-top:8px;font-size:11.5px;color:var(--muted);line-height:1.5}
+  .ref-summary b{color:var(--ink-2)}
+  .ref-tx{color:var(--aqua);font-weight:700}
+  .ref-card{border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px;background:var(--surface-2)}
+  .ref-metric{border-top:1px solid var(--border);padding-top:10px;margin-top:10px}
+  .ref-metric-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+  .ref-metric-lab{font-size:11px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.4px;font-weight:700}
+  .ref-yr{padding:4px 10px;border:1px solid var(--border);background:var(--surface);color:var(--muted);
+    border-radius:20px;cursor:pointer;font-size:11px;font-weight:600}
+  .ref-yr:hover{border-color:var(--blue);color:var(--blue)}
+  .ref-yr.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .ref-auto{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .ref-auto>label{display:flex;flex-direction:column;gap:5px;font-size:11px;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.4px;font-weight:600}
+  .ref-auto .stepper,.ref-auto .numfield{width:100%}
+  .ref-years{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+  .ref-card-foot{border-top:1px solid var(--border);margin-top:12px;padding-top:9px;font-size:12px;color:var(--muted)}
+  .ref-card-foot b{color:var(--blue)}
+  /* poste d'hypothèse calculé (lecture seule) */
+  .ctrl-derived{background:var(--surface-2);border:1px dashed var(--border);border-radius:8px;padding:8px 10px}
+  .ctrl-derived label{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0}
+  .ctrl-derived b{color:var(--blue);font-size:14px}
+  /* section financement (dashboard) */
+  .fin-section{margin-top:0}
+  .fin-sec-h{font-size:16px;font-weight:700;color:var(--ink);margin:0 0 10px}
+  .fin-sec-h span{font-size:12.5px;font-weight:500;color:var(--muted)}
+  .fin-charts{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:900px){.fin-charts{grid-template-columns:1fr}}
+  /* onglets */
+  .tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border)}
+  .tab{padding:9px 18px;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;
+    font-size:13.5px;font-weight:600;color:var(--muted);margin-bottom:-1px}
+  .tab:hover{color:var(--ink)}
+  .tab.on{color:var(--blue);border-bottom-color:var(--blue)}
+  .view[hidden]{display:none}
+  /* sous-onglets (dans Simulation) */
+  .subtabs{display:flex;gap:6px;margin-bottom:16px}
+  .subtab{padding:7px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;
+    cursor:pointer;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+  .subtab:hover{border-color:var(--blue);color:var(--blue)}
+  .subtab.on{background:var(--blue-soft);border-color:var(--blue);color:var(--blue)}
+  .subview[hidden]{display:none}
+  .fin-intro{color:var(--ink-2);font-size:13px;margin:0 0 16px;line-height:1.55;max-width:840px}
+  .dcf-sub{color:var(--ink-2);font-size:13px;margin:0 0 16px;line-height:1.5;max-width:820px}
+  .dcf-sens-h{font-size:13px;color:var(--ink-2);font-weight:600;margin:22px 0 10px}
+  /* scénarios */
+  .scn-list{margin-bottom:8px}
+  .scn{display:flex;align-items:center;gap:8px;padding:7px 9px;border:1px solid var(--border);
+    border-radius:8px;margin-bottom:6px;background:var(--surface);font-size:12.5px}
+  .scn input[type=checkbox]{accent-color:var(--blue);width:15px;height:15px;flex:none;cursor:pointer}
+  .scn .scn-name{flex:1;cursor:pointer;color:var(--ink);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .scn .scn-name:hover{color:var(--blue)}
+  .scn{gap:5px}
+  .scn .scn-ic{border:none;background:none;color:var(--muted);cursor:pointer;font-size:13px;flex:none;padding:0 3px;line-height:1}
+  .scn .scn-ic:hover{color:var(--blue)}
+  .scn .scn-del:hover{color:var(--critical)}
+  .scn-empty{font-size:11.5px;color:var(--muted);padding:2px 0 8px;line-height:1.4}
+  .scn-actions{display:flex;gap:6px}
+  .scn-btn{flex:1;padding:8px;border:1px solid var(--border);background:var(--surface);color:var(--ink);
+    border-radius:8px;cursor:pointer;font-size:12px;font-weight:600}
+  .scn-btn:hover{border-color:var(--blue);color:var(--blue)}
+  .scn-btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .scn-btn.primary:hover{background:#1c5cab;color:#fff}
+  /* tableau de comparaison */
+  .cmp-table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:22px}
+  .cmp-table th,.cmp-table td{padding:8px 12px;text-align:right;border-bottom:1px solid var(--border);
+    font-variant-numeric:tabular-nums;white-space:nowrap}
+  .cmp-table th:first-child,.cmp-table td:first-child{text-align:left;color:var(--ink)}
+  .cmp-table thead th{color:var(--ink);font-weight:700;border-bottom:2px solid var(--border)}
+  .cmp-table .best{color:var(--good-text);font-weight:700}
+  .cmp-table th.cmp-cur{color:var(--blue)}
+  .modal select{padding:5px 9px;border:1px solid var(--border);border-radius:7px;background:var(--surface);
+    color:var(--ink);font-size:12.5px;font-weight:600;cursor:pointer}
+  /* ---- Résultats ---- */
+  main{padding:18px 22px;overflow-y:auto;max-height:calc(100vh - 58px)}
+  .simbar{display:none;align-items:center;gap:10px;background:var(--blue-soft);border:1px solid var(--border);
+    border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--ink-2)}
+  .simbar.on{display:flex}
+  .simbar .dot{width:8px;height:8px;border-radius:50%;background:var(--blue);flex:none}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:12px;margin-bottom:16px}
+  .kpi{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 15px;box-shadow:var(--shadow)}
+  .kpi .k-lab{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+  .kpi .k-val{font-size:22px;font-weight:700;margin-top:5px;color:var(--ink);letter-spacing:-.3px}
+  .kpi .k-sub{font-size:11px;color:var(--muted);margin-top:2px}
+  .kpi .k-delta{display:inline-block;font-size:11px;font-weight:700;margin-top:7px;padding:2px 8px;border-radius:20px}
+  .kpi .k-delta.good{color:var(--good-text);background:rgba(12,163,12,.12)}
+  .kpi .k-delta.bad{color:var(--critical);background:rgba(208,59,59,.12)}
+  .kpi .k-delta.flat{color:var(--muted);background:var(--surface-2)}
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
+  .badge.ok{background:rgba(12,163,12,.12);color:var(--good-text)}
+  .badge.ko{background:rgba(208,59,59,.12);color:var(--critical)}
+  /* conseiller CFO */
+  .conseil{margin-bottom:18px}
+  .conseil-h{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .conseil-count{font-size:11px;font-weight:600;color:var(--muted);background:var(--surface-2);padding:2px 9px;border-radius:20px}
+  .finding{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--muted);
+    border-radius:10px;padding:11px 14px;margin-bottom:8px;box-shadow:var(--shadow)}
+  .finding.critical{border-left-color:var(--critical)}
+  .finding.serious{border-left-color:#ec835a}
+  .finding.warning{border-left-color:var(--warning)}
+  .finding.info{border-left-color:var(--blue)}
+  .finding.good{border-left-color:var(--good)}
+  .f-titre{font-weight:700;font-size:13.5px;color:var(--ink);margin-bottom:4px}
+  .f-sev{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-right:8px;vertical-align:1px}
+  .finding.critical .f-sev{color:var(--critical)}
+  .finding.serious .f-sev{color:#ec835a}
+  .finding.warning .f-sev{color:var(--warning)}
+  .finding.info .f-sev{color:var(--blue)}
+  .finding.good .f-sev{color:var(--good)}
+  .f-constat{font-size:13px;color:var(--ink-2);line-height:1.5;margin-bottom:6px}
+  .f-levier{font-size:12.5px;color:var(--ink-2);line-height:1.5;background:var(--surface-2);padding:7px 11px;border-radius:7px}
+  .f-levier b{color:var(--ink)}
+  .charts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 15px;box-shadow:var(--shadow)}
+  .card h3{margin:0 0 8px;font-size:12.5px;color:var(--ink-2);font-weight:600}
+  .card canvas{max-height:210px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+  .tblwrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px;overflow-x:auto;box-shadow:var(--shadow)}
+  th,td{padding:6px 9px;text-align:right;white-space:nowrap}
+  th{color:var(--muted);font-weight:600;border-bottom:1px solid var(--border)}
+  td:first-child,th:first-child{text-align:left;color:var(--ink)}
+  tr.sec td{background:var(--surface-2);font-weight:700;border-top:1px solid var(--border);color:var(--ink)}
+  tr.tot td{font-weight:700;color:var(--ink)}
+  .pos{color:var(--good-text)} .neg{color:var(--critical)}
+  @media(max-width:900px){.wrap{grid-template-columns:1fr}aside{max-height:none}.charts{grid-template-columns:1fr}}
+  /* ---- Impression / export PDF (présentation banque) ---- */
+  @media print{
+    @page{size:A4;margin:12mm}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    html,body{background:#fff;width:auto;overflow:visible}
+    aside,.reset,.simbar,header,.btn-export,.conseil{display:none!important}
+    .wrap{grid-template-columns:1fr;min-height:0}
+    main{max-height:none;overflow:visible;padding:0;width:auto;max-width:100%}
+    .kpi,.card,.tblwrap,.finding{box-shadow:none;break-inside:avoid}
+    .charts{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+    .charts canvas{width:100%!important;height:auto!important;max-width:100%}
+    .tblwrap{overflow:visible}
+    .print-head{display:block;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid var(--ink)}
+    .print-head .ph-co{font-size:23px;font-weight:700}
+    .print-head .ph-sub{font-size:12px;color:var(--ink-2);margin-top:3px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Specularé <span class="co-sep">·</span> <span id="coName" contenteditable="true" spellcheck="false" title="Cliquer pour renommer l&#39;entreprise">Base</span></h1>
+  <span class="slogan" id="slogan">Business plan 5 ans · décisions · valorisation</span>
+  <div class="hdr-actions">
+    <button class="btn-export ghost" id="btnCsv">⤓ Export CSV</button>
+    <button class="btn-export" id="btnExport">⤓ Export PDF</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <aside>
+    <div class="aside-sec" data-view="sim">
+    <div class="aside-h">Scénarios</div>
+    <div id="scnList" class="scn-list"><div class="scn-empty">Aucun scénario enregistré. Définir des hypothèses et des décisions, puis « Enregistrer ».</div></div>
+    <div class="scn-actions">
+      <button class="scn-btn" id="btnSaveScn">Enregistrer</button>
+      <button class="scn-btn primary" id="btnCompare">Comparer</button>
+    </div>
+    </div><!-- /aside-sec Scénarios -->
+    <div class="aside-sec" data-view="sim">
+    <div class="aside-h" style="margin-top:18px">Décisions à simuler</div>
+    <div id="decisions"></div><!-- cartes générées dynamiquement par buildDecisions() depuis decInstances -->
+    </div><!-- /aside-sec Décisions -->
+    <div class="aside-h" style="margin-top:18px">Hypothèses</div>
+    <div id="inputs"><details open=""><summary>Paramètres clés</summary><div class="grp"><div class="ctrl">
+        <label for="in_volN"><span>Volume vendu en N</span><b id="lab_volN">10 000</b></label>
+        <div class="row">
+          <input type="range" id="in_volN" min="0" max="50000" step="500" value="10000">
+          <div class="stepper">
+            <button type="button" class="st-btn" data-k="volN" data-d="-1">−</button>
+            <input type="number" id="num_volN" class="numfield" min="0" max="50000" step="500" value="10000">
+            <button type="button" class="st-btn" data-k="volN" data-d="1">+</button>
+          </div>
+        </div></div><div class="ctrl">
+        <label for="in_gVol"><span>Croissance volumes</span><b id="lab_gVol">8 %</b></label>
+        <div class="row">
+          <input type="range" id="in_gVol" min="-10" max="30" step="0.5" value="8">
+          <div class="stepper">
+            <button type="button" class="st-btn" data-k="gVol" data-d="-1">−</button>
+            <input type="number" id="num_gVol" class="numfield" min="-10" max="30" step="0.5" value="8">
+            <button type="button" class="st-btn" data-k="gVol" data-d="1">+</button>
+          </div>
+        </div></div><div class="ctrl">
+        <label for="in_prixN"><span>Prix unitaire en N</span><b id="lab_prixN">50&nbsp;€</b></label>
+        <div class="row">
+          <input type="range" id="in_prixN" min="0" max="500" step="5" value="50">
+          <div class="stepper">
+            <button type="button" class="st-btn" data-k="prixN" data-d="-1">−</button>
+            <input type="number" id="num_prixN" class="numfield" min="0" max="500" step="5" value="50">
+            <button type="button" class="st-btn" data-k="prixN" data-d="1">+</button>
+          </div>
+        </div></div><div class="ctrl">
+        <label for="in_tauxCV"><span>Taux de charges variables<span class="tip" title="Part du chiffre d&#39;affaires consommée par les charges variables (matières, sous-traitance…). Ce qui reste = marge sur coûts variables.">i</span></span><b id="lab_tauxCV">45 %</b></label>
+        <div class="row">
+          <input type="range" id="in_tauxCV" min="10" max="90" step="1" value="45">
+          <div class="stepper">
+            <button type="button" class="st-btn" data-k="tauxCV" data-d="-1">−</button>
+            <input type="number" id="num_tauxCV" class="numfield" min="10" max="90" step="1" value="45">
+            <button type="button" class="st-btn" data-k="tauxCV" data-d="1">+</button>
+          </div>
+        </div></div><div class="ctrl">
+        <label for="in_capex"><span>CAPEX courant / an</span><b id="lab_capex">150 000&nbsp;€</b></label>
+        <div class="row">
+          <input type="range" id="in_capex" min="0" max="1000000" step="10000" value="150000">
+          <div class="stepper">
+            <button type="button" class="st-btn" data-k="capex" data-d="-1">−</button>
+            <input type="number" id="num_capex" class="numfield" min="0" max="1000000" step="10000" value="150000">
+            <button type="button" class="st-btn" data-k="capex" data-d="1">+</button>
+          </div>
+        </div></div></div></details><details><summary>Coûts &amp; marge (avancé)</summary><div class="grp"><div class="ctrl">
+        <label for="in_gPrix"><span>Croissance prix</span><b id="lab_gPrix">2 %</b></label>
+        <div class="row">
+          <input type="range" id="in_gPrix" min="-5" max="15" step="0.5" value="2">
+          <div class="stepper">
+            <button type="button" class="st-btn" data-k="gPrix" data-d="-1">−</button>
+            <input type="number" id="num_gPrix" class="numfield" min="-5" max="15" step="0.5" value="2">
+            <button type="button" class="st-btn" data-k="gPrix" data-d="1">+</button>
+          </div>
+        </div></div><div class="ctrl">
+        <label for="in_cfN"><span>Charges fixes en N</span><b id="lab_cfN">120 000&nbsp;€</b></label>
+        <div class="row">
+          <input type="range" id="in_cfN" min="0" max="1000000" step="10000" value="120000">
+          <div class="stepper">
+            <button type="button" class="st-btn" data-k="cfN" data-d="-1">−</button>
+            <input type="number" id="num_cfN" class="numfield" min="0" max="1000000" step="10000" value="120000">
+            <button type="button" class="st-btn" data-k="cfN" data-d="1">+</button>
+          </div>
+        </div></div><div class="ctrl">
+        <label for="in_inflCF"><span>Inflation charges fixes</span><b id="lab_inflCF">2 %</b></label>
+        <div class="row">
+          <input type="range" id="in_inflCF" min="0" max="10" step="0.5" value="2">
+          <div class="stepper">
+            <button type="button" class="st-btn" data-k="inflCF" data-d="-1">−</button>
+            <input type="number" id="num_inflCF" class="numfield" min="0" max="10" step="0.5" value="2">
+            <button type="button" class="st-btn" data-k="inflCF" data-d="1">+</button>
+          </div>
+        </div></div><div class="ctrl">
+        <label for="in_persoN"><span>Charges de personnel en N</span><b id="lab_persoN">60 000&nbsp;€</b></label>
+        <div class="row">
+          <input type="range" id="in_persoN" min="0" max="1000000" step="10000" value="60000">
+          <div class="stepper">
+            <button type="button" class="st-btn" data-k="persoN" data-d="-1">−</button>
+            <input type="number" id="num_persoN" class="numfield" min="0" max="1000000" step="10000" value="60000">
+            <button type="button" class="st-btn" data-k="persoN" data-d="1">+</button>
+          </div>
+        </div></div><div class="ctrl">
+        <label for="in_gPerso"><span>Croissance personnel</span><b id="lab_gPerso">3 %</b></label>
+        <div class="row">
+          <input type="range" id="in_gPerso" min="-5" max="15" step="0.5" value="3">
+          <div class="stepper">
+            <button type="button" class="st-btn" data-k="gPerso" data-d="-1">−</button>
+            <input type="number" id="num_gPerso" class="numfield" min="-5" max="15" step="0.5" value="3">
+            <button type="button" class="st-btn" data-k="gPerso" data-d="1">+</button>
+          </div>
+        </div></div><div class="ctrl">
+        <label for="in_tauxIS"><span>Taux d'imposition (IS)</span><b id="lab_tauxIS">25 %</b></label>
+        <div class="row">
+          <input type="range" id="in_tauxIS" min="0" max="40" step="1" value="25">
+          <div class="stepper">
+            <button type="button" class="st-btn" data-k="tauxIS" data-d="-1">−</button>
+            <input type="number" id="num_tauxIS" class="numfield" min="0" max="40" step="1" value="25">
+            <button type="button" class="st-btn" data-k="tauxIS" data-d="1">+</button>
+          </div>
+        </div></div></div></details><details><summary>BFR — délais (avancé)</summary><div class="grp"><div class="ctrl">
+        <label for="in_DSO"><span>DSO — délai clients<span class="tip" title="Days Sales Outstanding : délai moyen de paiement des clients, en jours. Plus il est élevé, plus le cash est immobilisé dans les créances.">i</span></span><b id="lab_DSO">45 j</b></label>
+        <div class="row">
+          <input type="range" id="in_DSO" min="0" max="180" step="5" value="45">
+          <div class="stepper">
+            <button type="button" class="st-btn" data-k="DSO" data-d="-1">−</button>
+            <input type="number" id="num_DSO" class="numfield" min="0" max="180" step="5" value="45">
+            <button type="button" class="st-btn" data-k="DSO" data-d="1">+</button>
+          </div>
+        </div></div><div class="ctrl">
+        <label for="in_DPO"><span>DPO — délai fournisseurs<span class="tip" title="Days Payable Outstanding : délai moyen de paiement des fournisseurs. Plus il est élevé, mieux c&#39;est pour la trésorerie (on garde le cash plus longtemps).">i</span></span><b id="lab_DPO">60 j</b></label>
+        <div class="row">
+          <input type="range" id="in_DPO" min="0" max="180" step="5" value="60">
+          <div class="stepper">
+            <button type="button" class="st-btn" data-k="DPO" data-d="-1">−</button>
+            <input type="number" id="num_DPO" class="numfield" min="0" max="180" step="5" value="60">
+            <button type="button" class="st-btn" data-k="DPO" data-d="1">+</button>
+          </div>
+        </div></div><div class="ctrl">
+        <label for="in_DIO"><span>DIO — durée de stockage<span class="tip" title="Days Inventory Outstanding : durée moyenne de stockage, en jours. Plus il est élevé, plus le stock gèle du cash.">i</span></span><b id="lab_DIO">30 j</b></label>
+        <div class="row">
+          <input type="range" id="in_DIO" min="0" max="180" step="5" value="30">
+          <div class="stepper">
+            <button type="button" class="st-btn" data-k="DIO" data-d="-1">−</button>
+            <input type="number" id="num_DIO" class="numfield" min="0" max="180" step="5" value="30">
+            <button type="button" class="st-btn" data-k="DIO" data-d="1">+</button>
+          </div>
+        </div></div></div></details><details><summary>Immobilisations (avancé)</summary><div class="grp"><div class="ctrl">
+        <label for="in_immoOuv0"><span>Immos nettes ouverture N</span><b id="lab_immoOuv0">800 000&nbsp;€</b></label>
+        <div class="row">
+          <input type="range" id="in_immoOuv0" min="0" max="3000000" step="50000" value="800000">
+          <div class="stepper">
+            <button type="button" class="st-btn" data-k="immoOuv0" data-d="-1">−</button>
+            <input type="number" id="num_immoOuv0" class="numfield" min="0" max="3000000" step="50000" value="800000">
+            <button type="button" class="st-btn" data-k="immoOuv0" data-d="1">+</button>
+          </div>
+        </div></div><div class="ctrl">
+        <label for="in_duree"><span>Durée d'amortissement</span><b id="lab_duree">8 ans</b></label>
+        <div class="row">
+          <input type="range" id="in_duree" min="1" max="25" step="1" value="8">
+          <div class="stepper">
+            <button type="button" class="st-btn" data-k="duree" data-d="-1">−</button>
+            <input type="number" id="num_duree" class="numfield" min="1" max="25" step="1" value="8">
+            <button type="button" class="st-btn" data-k="duree" data-d="1">+</button>
+          </div>
+        </div></div></div></details><details><summary>Financement (avancé)</summary><div class="grp"><div class="ctrl">
+        <label for="in_detteOuv0"><span>Dette ouverture N</span><b id="lab_detteOuv0">500 000&nbsp;€</b></label>
+        <div class="row">
+          <input type="range" id="in_detteOuv0" min="0" max="3000000" step="50000" value="500000">
+          <div class="stepper">
+            <button type="button" class="st-btn" data-k="detteOuv0" data-d="-1">−</button>
+            <input type="number" id="num_detteOuv0" class="numfield" min="0" max="3000000" step="50000" value="500000">
+            <button type="button" class="st-btn" data-k="detteOuv0" data-d="1">+</button>
+          </div>
+        </div></div><div class="ctrl">
+        <label for="in_tauxInt"><span>Taux d'intérêt (dette initiale)</span><b id="lab_tauxInt">4 %</b></label>
+        <div class="row">
+          <input type="range" id="in_tauxInt" min="0" max="15" step="0.25" value="4">
+          <div class="stepper">
+            <button type="button" class="st-btn" data-k="tauxInt" data-d="-1">−</button>
+            <input type="number" id="num_tauxInt" class="numfield" min="0" max="15" step="0.25" value="4">
+            <button type="button" class="st-btn" data-k="tauxInt" data-d="1">+</button>
+          </div>
+        </div></div><div class="ctrl">
+        <label for="in_tauxIntNew"><span>Taux d'intérêt (nouveaux emprunts)</span><b id="lab_tauxIntNew">5,5 %</b></label>
+        <div class="row">
+          <input type="range" id="in_tauxIntNew" min="0" max="20" step="0.25" value="5.5">
+          <div class="stepper">
+            <button type="button" class="st-btn" data-k="tauxIntNew" data-d="-1">−</button>
+            <input type="number" id="num_tauxIntNew" class="numfield" min="0" max="20" step="0.25" value="5.5">
+            <button type="button" class="st-btn" data-k="tauxIntNew" data-d="1">+</button>
+          </div>
+        </div></div><div class="ctrl">
+        <label for="in_wacc"><span>Coût du capital (WACC)<span class="tip" title="Coût Moyen Pondéré du Capital : rendement minimum attendu par les financeurs (dette + fonds propres). L&#39;entreprise crée de la valeur seulement si son ROCE dépasse ce seuil.">i</span></span><b id="lab_wacc">8 %</b></label>
+        <div class="row">
+          <input type="range" id="in_wacc" min="0" max="25" step="0.5" value="8">
+          <div class="stepper">
+            <button type="button" class="st-btn" data-k="wacc" data-d="-1">−</button>
+            <input type="number" id="num_wacc" class="numfield" min="0" max="25" step="0.5" value="8">
+            <button type="button" class="st-btn" data-k="wacc" data-d="1">+</button>
+          </div>
+        </div></div><div class="ctrl">
+        <label for="in_tauxDiv"><span>Taux de dividende</span><b id="lab_tauxDiv">30 %</b></label>
+        <div class="row">
+          <input type="range" id="in_tauxDiv" min="0" max="100" step="5" value="30">
+          <div class="stepper">
+            <button type="button" class="st-btn" data-k="tauxDiv" data-d="-1">−</button>
+            <input type="number" id="num_tauxDiv" class="numfield" min="0" max="100" step="5" value="30">
+            <button type="button" class="st-btn" data-k="tauxDiv" data-d="1">+</button>
+          </div>
+        </div></div><div class="ctrl">
+        <label for="in_rnN1"><span>Résultat net N-1</span><b id="lab_rnN1">180 000&nbsp;€</b></label>
+        <div class="row">
+          <input type="range" id="in_rnN1" min="-200000" max="500000" step="10000" value="180000">
+          <div class="stepper">
+            <button type="button" class="st-btn" data-k="rnN1" data-d="-1">−</button>
+            <input type="number" id="num_rnN1" class="numfield" min="-200000" max="500000" step="10000" value="180000">
+            <button type="button" class="st-btn" data-k="rnN1" data-d="1">+</button>
+          </div>
+        </div></div></div></details><details><summary>Bilan d'ouverture (avancé)</summary><div class="grp"><div class="ctrl">
+        <label for="in_openStocks"><span>Stocks ouverture</span><b id="lab_openStocks">40 000&nbsp;€</b></label>
+        <div class="row">
+          <input type="range" id="in_openStocks" min="0" max="500000" step="5000" value="40000">
+          <div class="stepper">
+            <button type="button" class="st-btn" data-k="openStocks" data-d="-1">−</button>
+            <input type="number" id="num_openStocks" class="numfield" min="0" max="500000" step="5000" value="40000">
+            <button type="button" class="st-btn" data-k="openStocks" data-d="1">+</button>
+          </div>
+        </div></div><div class="ctrl">
+        <label for="in_openCreances"><span>Créances clients ouverture</span><b id="lab_openCreances">60 000&nbsp;€</b></label>
+        <div class="row">
+          <input type="range" id="in_openCreances" min="0" max="500000" step="5000" value="60000">
+          <div class="stepper">
+            <button type="button" class="st-btn" data-k="openCreances" data-d="-1">−</button>
+            <input type="number" id="num_openCreances" class="numfield" min="0" max="500000" step="5000" value="60000">
+            <button type="button" class="st-btn" data-k="openCreances" data-d="1">+</button>
+          </div>
+        </div></div><div class="ctrl">
+        <label for="in_tresoOuv0"><span>Trésorerie ouverture</span><b id="lab_tresoOuv0">50 000&nbsp;€</b></label>
+        <div class="row">
+          <input type="range" id="in_tresoOuv0" min="-500000" max="1000000" step="5000" value="50000">
+          <div class="stepper">
+            <button type="button" class="st-btn" data-k="tresoOuv0" data-d="-1">−</button>
+            <input type="number" id="num_tresoOuv0" class="numfield" min="-500000" max="1000000" step="5000" value="50000">
+            <button type="button" class="st-btn" data-k="tresoOuv0" data-d="1">+</button>
+          </div>
+        </div></div><div class="ctrl">
+        <label for="in_openDettesF"><span>Dettes fournisseurs ouv.</span><b id="lab_openDettesF">45 000&nbsp;€</b></label>
+        <div class="row">
+          <input type="range" id="in_openDettesF" min="0" max="500000" step="5000" value="45000">
+          <div class="stepper">
+            <button type="button" class="st-btn" data-k="openDettesF" data-d="-1">−</button>
+            <input type="number" id="num_openDettesF" class="numfield" min="0" max="500000" step="5000" value="45000">
+            <button type="button" class="st-btn" data-k="openDettesF" data-d="1">+</button>
+          </div>
+        </div></div><div class="ctrl">
+        <label for="in_cpOuv0"><span>Capitaux propres ouverture</span><b id="lab_cpOuv0">405 000&nbsp;€</b></label>
+        <div class="row">
+          <input type="range" id="in_cpOuv0" min="0" max="3000000" step="5000" value="405000">
+          <div class="stepper">
+            <button type="button" class="st-btn" data-k="cpOuv0" data-d="-1">−</button>
+            <input type="number" id="num_cpOuv0" class="numfield" min="0" max="3000000" step="5000" value="405000">
+            <button type="button" class="st-btn" data-k="cpOuv0" data-d="1">+</button>
+          </div>
+        </div></div></div></details></div>
+    <div class="aside-sec" data-view="sim">
+    <div class="aside-h" style="margin-top:16px">Références produits</div>
+    <button class="fin-open" id="refOpen">Gérer les références (prix / volume / coût)…</button>
+    <div class="ref-summary" id="refSummaryPanel"></div>
+    </div><!-- /aside-sec Références -->
+    <div class="aside-sec" data-view="sim">
+    <div class="aside-h" style="margin-top:16px">Financement</div>
+    <button class="fin-open" id="finOpen">Planifier emprunts &amp; remboursements…</button>
+    </div><!-- /aside-sec Financement -->
+    <button class="reset" id="reset" style="margin-top:12px">↺ Tout réinitialiser</button>
+  </aside>
+
+  <main>
+    <nav class="tabs">
+      <button class="tab on" data-view="sim">Simulation</button>
+      <button class="tab" data-view="dcf">Valorisation DCF</button>
+    </nav>
+    <div class="view" id="view-sim">
+    <div class="print-head" id="printHead"><div class="ph-co">Base</div><div class="ph-sub">Business plan 5 ans · prévisions · édité le 15 juillet 2026</div></div>
+    <div class="simbar" id="simbar"><span class="dot"></span><span id="simtxt"></span></div>
+    <nav class="subtabs">
+      <button class="subtab on" data-sub="apercu">Vue d'ensemble</button>
+      <button class="subtab" data-sub="refs">Par référence</button>
+      <button class="subtab" data-sub="fin">Financement</button>
+    </nav>
+    <div class="subview" id="sub-apercu">
+    <div class="kpis" id="kpis"><div class="kpi"><div class="k-lab">CA (N+4)<span class="tip" title="Chiffre d&#39;affaires prévu en année N+4 (volume × prix).">i</span></div>
+      <div class="k-val">736 319&nbsp;€</div></div><div class="kpi"><div class="k-lab">Marge EBITDA (N+4)<span class="tip" title="EBITDA / CA. Profitabilité opérationnelle avant amortissements, intérêts et impôts.">i</span></div>
+      <div class="k-val">28,2 %</div></div><div class="kpi"><div class="k-lab">Résultat net (N+4)<span class="tip" title="Bénéfice final après charges financières et impôt.">i</span></div>
+      <div class="k-val">62 146&nbsp;€</div></div><div class="kpi"><div class="k-lab">Trésorerie — point bas<span class="tip" title="Le plus bas niveau de trésorerie sur les 5 ans. S&#39;il est négatif, il dimensionne le financement à sécuriser.">i</span></div>
+      <div class="k-val">-631 108&nbsp;€</div></div><div class="kpi"><div class="k-lab">Dette nette / EBITDA (N+4)<span class="tip" title="Nombre d&#39;années d&#39;EBITDA nécessaires pour rembourser la dette nette. Seuil d&#39;alerte bancaire ~3×.">i</span></div>
+      <div class="k-val">3,0×</div></div><div class="kpi"><div class="k-lab">BFR (jours de CA, N+4)<span class="tip" title="Besoin en Fonds de Roulement en jours de CA : le cash immobilisé par le cycle (créances + stocks − dettes fournisseurs).">i</span></div>
+      <div class="k-val">31 j</div></div><div class="kpi"><div class="k-lab">ROCE ap. impôt (N+4)<span class="tip" title="Return On Capital Employed : rentabilité des capitaux engagés, après impôt (NOPAT / (immos + BFR)). À comparer au WACC : ROCE &gt; WACC = création de valeur.">i</span></div>
+      <div class="k-val">6,2 %</div></div><div class="kpi"><div class="k-lab">Équilibre du bilan</div>
+    <div class="k-val"><span class="badge ok">✓ équilibré</span></div>
+    <div class="k-sub">Actif − Passif sur 5 ans</div></div></div>
+    <div class="conseil" id="conseil"></div>
+    <div class="charts">
+      <div class="card"><h3>Activité — CA &amp; EBITDA</h3><canvas id="cActivite" style="box-sizing: border-box; display: block; height: 210px; width: 709px;" width="709" height="210"></canvas></div>
+      <div class="card"><h3>Trésorerie de clôture</h3><canvas id="cTreso" style="box-sizing: border-box; display: block; height: 210px; width: 709px;" width="709" height="210"></canvas></div>
+      <div class="card"><h3>Résultat net</h3><canvas id="cRN" style="box-sizing: border-box; display: block; height: 210px; width: 709px;" width="709" height="210"></canvas></div>
+      <div class="card"><h3>Dette nette / EBITDA (× ; seuil d'alerte 3×)</h3><canvas id="cLevier" style="box-sizing: border-box; display: block; height: 210px; width: 709px;" width="709" height="210"></canvas></div>
+    </div>
+    <div class="tblwrap">
+      <table id="tbl"><tbody><tr><th>(en €)</th><th>N</th><th>N+1</th><th>N+2</th><th>N+3</th><th>N+4</th></tr><tr class=" tot"><td>Chiffre d'affaires</td><td class="">500 000&nbsp;€</td><td class="">550 800&nbsp;€</td><td class="">606 761&nbsp;€</td><td class="">668 408&nbsp;€</td><td class="">736 319&nbsp;€</td></tr><tr class=" "><td>Croissance du CA</td><td class="">—</td><td class="">10,2 %</td><td class="">10,2 %</td><td class="">10,2 %</td><td class="">10,2 %</td></tr><tr class=" "><td>Charges variables</td><td class="">-225 000&nbsp;€</td><td class="">-247 860&nbsp;€</td><td class="">-273 043&nbsp;€</td><td class="">-300 784&nbsp;€</td><td class="">-331 343&nbsp;€</td></tr><tr class=" "><td>Marge sur coûts variables</td><td class="">275 000&nbsp;€</td><td class="">302 940&nbsp;€</td><td class="">333 719&nbsp;€</td><td class="">367 625&nbsp;€</td><td class="">404 975&nbsp;€</td></tr><tr class=" "><td>Charges fixes</td><td class="">-120 000&nbsp;€</td><td class="">-122 400&nbsp;€</td><td class="">-124 848&nbsp;€</td><td class="">-127 345&nbsp;€</td><td class="">-129 892&nbsp;€</td></tr><tr class=" "><td>Charges de personnel</td><td class="">-60 000&nbsp;€</td><td class="">-61 800&nbsp;€</td><td class="">-63 654&nbsp;€</td><td class="">-65 564&nbsp;€</td><td class="">-67 531&nbsp;€</td></tr><tr class=" tot"><td>EBITDA</td><td class="pos">95 000&nbsp;€</td><td class="pos">118 740&nbsp;€</td><td class="pos">145 217&nbsp;€</td><td class="pos">174 716&nbsp;€</td><td class="pos">207 553&nbsp;€</td></tr><tr class=" "><td>Marge d'EBITDA</td><td class="">19,0 %</td><td class="">21,6 %</td><td class="">23,9 %</td><td class="">26,1 %</td><td class="">28,2 %</td></tr><tr class=" "><td>Dotation amortissements</td><td class="">-100 000&nbsp;€</td><td class="">-106 250&nbsp;€</td><td class="">-111 719&nbsp;€</td><td class="">-116 504&nbsp;€</td><td class="">-120 691&nbsp;€</td></tr><tr class=" tot"><td>EBIT</td><td class="neg">-5 000&nbsp;€</td><td class="pos">12 490&nbsp;€</td><td class="pos">33 498&nbsp;€</td><td class="pos">58 212&nbsp;€</td><td class="pos">86 862&nbsp;€</td></tr><tr class=" "><td>Charges financières</td><td class="">-20 000&nbsp;€</td><td class="">-16 000&nbsp;€</td><td class="">-12 000&nbsp;€</td><td class="">-8 000&nbsp;€</td><td class="">-4 000&nbsp;€</td></tr><tr class=" "><td>Résultat avant impôt</td><td class="neg">-25 000&nbsp;€</td><td class="neg">-3 510&nbsp;€</td><td class="pos">21 498&nbsp;€</td><td class="pos">50 212&nbsp;€</td><td class="pos">82 862&nbsp;€</td></tr><tr class=" "><td>Impôt sur les sociétés</td><td class="">-0&nbsp;€</td><td class="">-0&nbsp;€</td><td class="">-0&nbsp;€</td><td class="">-10 800&nbsp;€</td><td class="">-20 715&nbsp;€</td></tr><tr class=" tot"><td>RÉSULTAT NET</td><td class="neg">-25 000&nbsp;€</td><td class="neg">-3 510&nbsp;€</td><td class="pos">21 498&nbsp;€</td><td class="pos">39 412&nbsp;€</td><td class="pos">62 146&nbsp;€</td></tr><tr class="sec tot"><td>Trésorerie de clôture</td><td class="neg">-167 151&nbsp;€</td><td class="neg">-318 795&nbsp;€</td><td class="neg">-440 408&nbsp;€</td><td class="neg">-546 261&nbsp;€</td><td class="neg">-631 108&nbsp;€</td></tr><tr class=" "><td>BFR (jours de CA)</td><td class="">31 j</td><td class="">32 j</td><td class="">32 j</td><td class="">32 j</td><td class="">31 j</td></tr><tr class=" "><td>Dette nette</td><td class="">567 151&nbsp;€</td><td class="">618 795&nbsp;€</td><td class="">640 408&nbsp;€</td><td class="">646 261&nbsp;€</td><td class="">631 108&nbsp;€</td></tr><tr class=" "><td>Dette nette / EBITDA</td><td class="">6,0×</td><td class="">5,2×</td><td class="">4,4×</td><td class="">3,7×</td><td class="">3,0×</td></tr><tr class=" "><td>ROCE (après impôt)</td><td class="">-0,4 %</td><td class="">1,0 %</td><td class="">2,6 %</td><td class="">4,3 %</td><td class="">6,2 %</td></tr><tr class="sec "><td>Point mort (CA)</td><td class="">327 273&nbsp;€</td><td class="">334 909&nbsp;€</td><td class="">342 731&nbsp;€</td><td class="">350 743&nbsp;€</td><td class="">358 950&nbsp;€</td></tr><tr class=" "><td>Marge de sécurité</td><td class="">34,5 %</td><td class="">39,2 %</td><td class="">43,5 %</td><td class="">47,5 %</td><td class="">51,3 %</td></tr><tr class="sec tot"><td>Contrôle Actif − Passif</td><td class="">0&nbsp;€</td><td class="">0&nbsp;€</td><td class="">0&nbsp;€</td><td class="">0&nbsp;€</td><td class="">0&nbsp;€</td></tr></tbody></table>
+    </div>
+    </div><!-- /sub-apercu -->
+    <div class="subview" id="sub-refs" hidden>
+    <section class="fin-section">
+      <h2 class="fin-sec-h">Analyse par référence <span id="refAnSub"></span></h2>
+      <p class="fin-intro">Décomposition du chiffre d'affaires et de la marge par référence produit, sur tout l'horizon. Le <b>mix</b> montre comment le poids de chaque référence dans le CA évolue. Reflète les décisions actives (volume). Édite les références via <b>« Gérer les références »</b> (panneau de gauche).</p>
+      <div class="kpis" id="refKpis"></div>
+      <div class="charts">
+        <div class="card"><h3>CA par référence</h3><canvas id="cRefCA"></canvas></div>
+        <div class="card"><h3>Mix — poids dans le CA (%)</h3><canvas id="cRefMix"></canvas></div>
+        <div class="card"><h3>Marge sur coûts variables par référence</h3><canvas id="cRefMarge"></canvas></div>
+        <div class="card"><h3>Taux de marge par référence (%)</h3><canvas id="cRefTx"></canvas></div>
+      </div>
+      <div class="tblwrap"><table id="refTbl"></table></div>
+    </section>
+    </div><!-- /sub-refs -->
+    <div class="subview" id="sub-fin" hidden>
+    <section class="fin-section" id="finSection">
+      <h2 class="fin-sec-h">Financement — portefeuille d'emprunts <span id="finSecSub"></span></h2>
+      <p class="fin-intro">Analyse des emprunts configurés via <b>« Planifier emprunts &amp; remboursements »</b> (panneau de gauche). Chaque emprunt est en <b>annuités constantes</b> : l'annuité totale reste fixe, mais la part d'intérêts <b>baisse</b> et la part de capital remboursé <b>monte</b> au fil des années — jusqu'à un capital restant dû nul.</p>
+      <div class="charts fin-charts">
+        <div class="card"><h3>Capital restant dû</h3><canvas id="cResteDu"></canvas></div>
+        <div class="card"><h3>Intérêts payés / an</h3><canvas id="cInterets"></canvas></div>
+        <div class="card"><h3>Remboursement du capital / an</h3><canvas id="cCapital"></canvas></div>
+      </div>
+      <div class="tblwrap"><table id="finTbl"></table></div>
+    </section>
+    </div><!-- /sub-fin -->
+    </div><!-- /view-sim -->
+
+    <div class="view" id="view-dcf" hidden>
+      <div class="dcf-intro">
+        <h2 class="fin-sec-h">Valorisation par les flux de trésorerie actualisés (DCF)</h2>
+        <p class="dcf-sub">Valeur de l'entreprise = somme des <b>flux de trésorerie disponibles (FCFF)</b> actualisés au coût du capital (WACC), + une <b>valeur terminale</b>.
+          Règle WACC/g et le multiple de sortie dans les hypothèses (groupe « Valorisation DCF » à gauche).</p>
+      </div>
+      <div class="kpis" id="dcfKpis"></div>
+      <div class="charts">
+        <div class="card"><h3>Flux actualisés (PV) par année + valeur terminale</h3><canvas id="cDcfPV"></canvas></div>
+        <div class="card"><h3>Pont de valeur : EV → valeur des capitaux propres</h3><canvas id="cDcfBridge"></canvas></div>
+      </div>
+      <div class="tblwrap"><table id="dcfTbl"></table></div>
+      <h3 class="dcf-sens-h">Sensibilité de la valeur d'entreprise (EV) — WACC × croissance perpétuelle</h3>
+      <div class="tblwrap"><table id="dcfSens" class="cmp-table"></table></div>
+    </div><!-- /view-dcf -->
+  </main>
+</div>
+
+<script>
+// ============================================================
+//  HYPOTHÈSES (valeurs de base de la PME)
+//  kind: money | pct | days | num | years   (pct affiché en %, /100 dans le moteur)
+// ============================================================
+const GROUPS = [
+  {titre:"Paramètres clés", open:true, items:[
+    {key:"nbAnnees", lab:"Nombre d'années de prévision", v:5, min:3, max:10, step:1, kind:"years",
+      tip:"Durée de l'horizon de prévision (de 3 à 10 ans). Toutes les tables, graphes et la valo DCF s'adaptent automatiquement."},
+    {key:"capex", lab:"CAPEX courant / an",        v:150000, min:0, max:1000000, step:10000, kind:"money",
+      tip:"Le chiffre d'affaires, les volumes, prix et coûts variables se règlent désormais par référence produit (bouton « Gérer les références »)."},
+  ]},
+  {titre:"Coûts & marge (avancé)", open:false, items:[
+    {key:"cfN",   lab:"Charges fixes en N",         v:120000, min:0, max:1000000, step:10000, kind:"money"},
+    {key:"inflCF",lab:"Inflation charges fixes",    v:2,   min:0, max:10, step:0.5, kind:"pct"},
+    {key:"persoN",lab:"Charges de personnel en N",  v:60000, min:0, max:1000000, step:10000, kind:"money"},
+    {key:"gPerso",lab:"Croissance personnel",       v:3,   min:-5, max:15, step:0.5, kind:"pct"},
+    {key:"tauxIS",lab:"Taux d'imposition (IS)",     v:25,  min:0, max:40, step:1, kind:"pct"},
+  ]},
+  {titre:"BFR — délais (avancé)", open:false, items:[
+    {key:"DSO",lab:"DSO — délai clients",      v:45, min:0, max:180, step:5, kind:"days",
+      tip:"Days Sales Outstanding : délai moyen de paiement des clients, en jours. Plus il est élevé, plus le cash est immobilisé dans les créances."},
+    {key:"DPO",lab:"DPO — délai fournisseurs", v:60, min:0, max:180, step:5, kind:"days",
+      tip:"Days Payable Outstanding : délai moyen de paiement des fournisseurs. Plus il est élevé, mieux c'est pour la trésorerie (on garde le cash plus longtemps)."},
+    {key:"DIO",lab:"DIO — durée de stockage",  v:30, min:0, max:180, step:5, kind:"days",
+      tip:"Days Inventory Outstanding : durée moyenne de stockage, en jours. Plus il est élevé, plus le stock gèle du cash."},
+  ]},
+  {titre:"Immobilisations (avancé)", open:false, items:[
+    {key:"immoOuv0",lab:"Immos nettes ouverture N", v:800000, min:0, max:3000000, step:50000, kind:"money"},
+    {key:"duree",   lab:"Durée d'amortissement",     v:8, min:1, max:25, step:1, kind:"years"},
+  ]},
+  {titre:"Coût du capital (WACC)", view:'both', open:false, items:[
+    {key:"wacc",     lab:"Coût du capital (WACC)", v:8, min:0, max:25, step:0.5, kind:"pct",
+      tip:"Coût Moyen Pondéré du Capital : rendement minimum attendu par les financeurs (dette + fonds propres). Sert de seuil au conseiller (ROCE > WACC = création de valeur) ET de taux d'actualisation du DCF."},
+  ]},
+  {titre:"Financement (avancé)", open:false, items:[
+    {key:"tauxDiv",  lab:"Taux de dividende",     v:30, min:0, max:100, step:5, kind:"pct"},
+    {key:"rnN1",     lab:"Résultat net N-1",      v:180000, min:-200000, max:500000, step:10000, kind:"money"},
+  ]},
+  {titre:"Valorisation DCF (avancé)", view:'dcf', open:true, items:[
+    {key:"dcfG",   lab:"Croissance perpétuelle (g)", v:2, min:-2, max:6, step:0.25, kind:"pct",
+      tip:"Taux de croissance à l'infini des flux après l'horizon (valeur terminale de Gordon). Doit rester < WACC et proche de la croissance long terme de l'économie."},
+    {key:"dcfExit",lab:"Multiple de sortie (EV/EBITDA ×)", v:6, min:1, max:20, step:0.5, kind:"num",
+      tip:"Méthode alternative de valeur terminale : on revend l'entreprise en fin d'horizon à ce multiple d'EBITDA. Sert de contre-vérification à la méthode de Gordon."},
+  ]},
+  {titre:"Bilan d'ouverture (avancé)", open:false, items:[
+    {key:"openStocks",  lab:"Stocks ouverture",          v:40000, min:0, max:500000, step:5000, kind:"money"},
+    {key:"openCreances",lab:"Créances clients ouverture",v:60000, min:0, max:500000, step:5000, kind:"money"},
+    {key:"tresoOuv0",   lab:"Trésorerie ouverture (calculée)", v:50000, kind:"money", derived:true,
+      tip:"Calculée pour équilibrer le bilan d'ouverture : capitaux propres + dettes (dont dette d'ouverture) − immos − BFR d'ouverture. Conséquence : + de dette à l'ouverture = + de trésorerie."},
+    {key:"openDettesF", lab:"Dettes fournisseurs ouv.",  v:45000, min:0, max:500000, step:5000, kind:"money"},
+    {key:"cpOuv0",      lab:"Capitaux propres ouverture",v:405000, min:0, max:3000000, step:5000, kind:"money"},
+  ]},
+];
+function mkYears(n){ return Array.from({length:n},(_,i)=> i===0?'N':'N+'+i); }
+let ANNEES = mkYears(5);      // horizon paramétrable (3..10 ans) — reconstruit par applyHorizon()
+let NY = ANNEES.length;
+// ---- Portefeuille d'emprunts par défaut : la dette d'ouverture, modélisée en annuités constantes ----
+// depart : 'ouv' = dette déjà en cours à l'ouverture (pas d'encaissement) ; 0..NY-1 = emprunt tiré cette année-là.
+// L'entreprise emprunte sur une DURÉE fixée → la mensualité (annuité) est calculée en PMT. (Le mode « par mensualité » a été retiré : sans intérêt pour une entreprise.)
+const LOANS_DEF = [
+  {nom:"Dette initiale", montant:500000, taux:4, duree:8, depart:'ouv'},
+];
+
+// ============================================================
+//  RÉFÉRENCES PRODUITS — le CA et les charges variables sont la SOMME des références.
+//  Chaque référence : volume, prix unitaire, coût variable unitaire (marge = prix − coût),
+//  chacun soit en trajectoire auto (valeur en N + croissance/an), soit saisi par année (…Ov).
+//  1 référence = comportement mono-produit historique. La ref par défaut reproduit la base (10 000 × 50 €, CV 45 %).
+// ============================================================
+const REFS_DEF = [
+  {id:'r1', nom:'Produit principal', volN:10000, gVol:8, prixN:50, gPrix:2, coutN:22.5, gCout:2, volOv:null, prixOv:null, coutOv:null},
+];
+let refs = JSON.parse(JSON.stringify(REFS_DEF));   // source de vérité (unités d'affichage : croissances en %)
+const REF_METRICS = [
+  {m:'vol',  lab:'Volume',                base:'volN',  g:'gVol',  ov:'volOv',  unit:'',  step:500, gstep:0.5},
+  {m:'prix', lab:'Prix unitaire',         base:'prixN', g:'gPrix', ov:'prixOv', unit:'€', step:5,   gstep:0.5},
+  {m:'cout', lab:'Coût variable unitaire',base:'coutN', g:'gCout', ov:'coutOv', unit:'€', step:1,   gstep:0.5},
+];
+const metricOv = m => ({vol:'volOv', prix:'prixOv', cout:'coutOv'}[m]);
+const refN = (r,base,ov) => Array.isArray(r[ov]) ? (+r[ov][0]||0) : (+r[base]||0);   // valeur effective en N
+// convertit les références (affichage) en unités moteur (croissances /100, overrides ajustés à NY)
+function engineRefs(dr){
+  const mk=(ov,base,g)=>{ if(!Array.isArray(ov)) return null; const a=ov.slice(0,NY).map(Number);
+    for(let t=a.length;t<NY;t++) a.push((+base||0)*Math.pow(1+(+g||0),t)); return a; };
+  return (dr||[]).map(r=>({
+    nom:r.nom,
+    volN:+r.volN||0,  gVol:(+r.gVol||0)/100,
+    prixN:+r.prixN||0, gPrix:(+r.gPrix||0)/100,
+    coutN:+r.coutN||0, gCout:(+r.gCout||0)/100,
+    volOv: mk(r.volOv,  r.volN,  (+r.gVol||0)/100),
+    prixOv:mk(r.prixOv, r.prixN, (+r.gPrix||0)/100),
+    coutOv:mk(r.coutOv, r.coutN, (+r.gCout||0)/100),
+  }));
+}
+// migration : un état sauvegardé peut avoir .refs (nouveau) ou seulement l'ancien mono-produit (H.volN/prixN/tauxCV)
+function migrateRefsFromState(s){
+  if(s && Array.isArray(s.refs) && s.refs.length) return JSON.parse(JSON.stringify(s.refs));
+  const H=(s&&s.H)||{};
+  if(H.volN!=null && H.prixN!=null){
+    const prix=+H.prixN||0, tcv=+H.tauxCV||0;
+    return [{id:'r1', nom:'Produit principal', volN:+H.volN||0, gVol:+H.gVol||0, prixN:prix, gPrix:+H.gPrix||0,
+      coutN:Math.round(prix*tcv/100*100)/100, gCout:+H.gPrix||0, volOv:null, prixOv:null, coutOv:null}];
+  }
+  return JSON.parse(JSON.stringify(REFS_DEF));
+}
+
+// ============================================================
+//  MOTEUR D'EMPRUNTS — amortissement à annuités constantes
+//  (mensualité fixe : les intérêts baissent, le capital remboursé monte)
+// ============================================================
+function loanDuree(l){ return Math.max(1, Math.round(l.duree||1)); }   // durée fixée par l'utilisateur (en années)
+function loanAnnuite(montant,tauxPct,n){   // annuité constante (PMT annuel)
+  const r=(tauxPct||0)/100;
+  return r===0 ? montant/n : montant*r/(1-Math.pow(1+r,-n));
+}
+function loanMensualite(l){ return loanAnnuite(l.montant, l.taux, loanDuree(l))/12; }
+function amortSchedule(montant,tauxPct,n){ // tableau année par année
+  const r=(tauxPct||0)/100, A=loanAnnuite(montant,tauxPct,n), rows=[];
+  let solde=montant;
+  for(let k=0;k<n;k++){
+    const interet=solde*r;
+    let capital=A-interet;
+    if(k===n-1) capital=solde;             // dernière échéance : solde ramené exactement à 0
+    const soldeOuv=solde; solde=Math.max(0, solde-capital);
+    rows.push({soldeOuv, interet, capital, soldeClot:solde, annuite:A});
+  }
+  return rows;
+}
+// Agrège un portefeuille d'emprunts en séries annuelles alignées sur la timeline du modèle.
+// Identité préservée : detteClot[t] − detteClot[t−1] = nouvelEmp[t] − capital[t]  (bilan équilibré).
+function buildLoans(loanDefs){
+  const L=(loanDefs||[]).map(ld=>{
+    const n=loanDuree(ld), start=ld.depart==='ouv'?0:(parseInt(ld.depart,10)||0);
+    return {...ld, n, start, initial:ld.depart==='ouv', rows:amortSchedule(ld.montant, ld.taux, n)};
+  });
+  const horizon=Math.max(NY, ...L.map(l=>l.start+l.n), 1);
+  const A=()=>new Array(horizon).fill(0);
+  const interet=A(), capital=A(), nouvelEmp=A(), detteClot=A(), detteOuv=A();
+  let initOuv=0;
+  L.forEach(l=>{
+    if(l.initial) initOuv+=(+l.montant||0);
+    else if(l.start<horizon) nouvelEmp[l.start]+=(+l.montant||0);   // encaissement l'année du tirage
+    l.rows.forEach((row,k)=>{
+      const t=l.start+k; if(t>=horizon) return;
+      interet[t]+=row.interet; capital[t]+=row.capital; detteClot[t]+=row.soldeClot;
+    });
+  });
+  for(let t=0;t<horizon;t++) detteOuv[t]= t===0 ? initOuv : detteClot[t-1];
+  return {loans:L, interet, capital, nouvelEmp, detteOuv, detteClot, horizon};
+}
+
+// ============================================================
+//  DÉCISIONS DATÉES — chaque décision applique des deltas
+//  aux drivers annuels, à partir de son année de départ.
+// ============================================================
+const DECISIONS = [
+  {key:"recrut", icon:"", label:"Recrutement",
+   desc:"Embaucher du personnel supplémentaire à partir d'une année donnée.",
+   params:[
+     {key:"annee", lab:"Année d'embauche", kind:"year", v:1},
+     {key:"cout",  lab:"Coût chargé / an", kind:"money", v:55000, min:20000, max:200000, step:5000},
+   ],
+   apply:(vv,drv)=>{ for(let t=vv.annee;t<NY;t++) drv.perso[t]+=vv.cout; }},
+
+  {key:"gamme", icon:"", label:"Élargir la gamme",
+   desc:"Lancer une nouvelle référence produit, datée : elle démarre l'année de lancement (0 avant), avec son propre prix et coût unitaire. Elle change le mix et le taux de marge, et apparaît dans l'onglet « Par référence ».",
+   params:[
+     {key:"annee", lab:"Année de lancement",  kind:"year",  v:2},
+     {key:"volN",  lab:"Volume (année 1)",     kind:"unit",  v:1500, min:0, max:1000000, step:100},
+     {key:"gVol",  lab:"Croissance du volume", kind:"pct",   v:8, min:-20, max:50, step:1},
+     {key:"prixN", lab:"Prix unitaire",        kind:"money", v:85, min:0, max:100000, step:5},
+     {key:"gPrix", lab:"Croissance du prix",   kind:"pct",   v:2, min:-20, max:50, step:0.5},
+     {key:"coutN", lab:"Coût unitaire",        kind:"money", v:45, min:0, max:100000, step:5},
+     {key:"gCout", lab:"Croissance du coût",   kind:"pct",   v:2, min:-20, max:50, step:0.5},
+     {key:"capex", lab:"Invest. de lancement", kind:"money", v:80000, min:0, max:1000000, step:10000},
+   ],
+   // crée une VRAIE référence datée (0 avant le lancement), avec sa propre économie prix/coût :
+   // elle s'agrège dans ca=Σvol·prix et chgv=Σvol·cout comme les autres, et modifie donc le mix.
+   apply:(vv,drv,nom)=>{
+     const N=NY, vol=new Array(N).fill(0), prix=new Array(N).fill(0), cout=new Array(N).fill(0);
+     for(let t=vv.annee;t<N;t++){
+       const k=t-vv.annee;
+       vol[t] = vv.volN *Math.pow(1+vv.gVol, k);
+       prix[t]= vv.prixN*Math.pow(1+vv.gPrix,k);
+       cout[t]= vv.coutN*Math.pow(1+vv.gCout,k);
+       drv.ca[t]   += vol[t]*prix[t];
+       drv.chgv[t] += vol[t]*cout[t];
+     }
+     drv.refB.push({nom:nom||"Nouvelle gamme", vol, prix, cout});
+     drv.capex[vv.annee]+=vv.capex;
+   }},
+
+  {key:"usine", icon:"", label:"Ouvrir un site",
+   desc:"Nouveau site (usine, entrepôt, magasin…) : gros CAPEX financé par emprunt, charges fixes récurrentes, capacité supplémentaire pour écouler plus de volume.",
+   params:[
+     {key:"annee",    lab:"Année de mise en service", kind:"year",  v:2},
+     {key:"capex",    lab:"Investissement (CAPEX)",   kind:"money", v:800000, min:0, max:5000000, step:50000},
+     {key:"emprunt",  lab:"Financé par emprunt",      kind:"money", v:600000, min:0, max:5000000, step:50000},
+     {key:"tauxEmp",  lab:"Taux de l'emprunt",        kind:"pct",   v:5.5, min:0, max:20, step:0.25},
+     {key:"dureeEmp", lab:"Durée de l'emprunt (ans)", kind:"years", v:10, min:1, max:25, step:1},
+     {key:"cf",       lab:"Charges fixes / an",       kind:"money", v:120000, min:0, max:1000000, step:10000},
+     {key:"capacite", lab:"Capacité supplémentaire",  kind:"pct",   v:30, min:0, max:200, step:5},
+   ],
+   apply:(vv,drv)=>{
+     drv.capex[vv.annee]+=vv.capex;
+     const RAMP=[0.4,0.7,1,1,1];   // montée en charge : les charges fixes tombent tout de suite, le volume monte progressivement
+     for(let t=vv.annee;t<NY;t++){
+       drv.cf[t]+=vv.cf;
+       const k=t-vv.annee;
+       drv.volMult[t]*=(1+vv.capacite*RAMP[Math.min(k,RAMP.length-1)]);
+     }
+   },
+   // l'emprunt du site rejoint le portefeuille en annuités constantes (tiré l'année de mise en service)
+   applyLoan:(vv,nom)=> vv.emprunt>0 ? {nom:"Emprunt — "+(nom||"site"), montant:vv.emprunt, taux:vv.tauxEmp*100, duree:vv.dureeEmp, depart:vv.annee} : null},
+
+  {key:"capital", icon:"", label:"Ouverture de capital",
+   desc:"Lever des fonds propres : les actionnaires (ou de nouveaux investisseurs) injectent du cash. Renforce la trésorerie et les capitaux propres, sans dette.",
+   params:[
+     {key:"annee",   lab:"Année de l'opération", kind:"year",  v:1},
+     {key:"montant", lab:"Montant levé",         kind:"money", v:300000, min:0, max:5000000, step:50000},
+   ],
+   apply:(vv,drv)=>{ drv.equityInj[vv.annee]+=vv.montant; }},
+
+  {key:"rachat", icon:"", label:"Rachat de parts",
+   desc:"Opération inverse de l'ouverture de capital : l'entreprise rachète ses propres parts aux actionnaires. Sortie de cash et réduction des capitaux propres.",
+   params:[
+     {key:"annee",   lab:"Année de l'opération", kind:"year",  v:2},
+     {key:"montant", lab:"Montant racheté",      kind:"money", v:200000, min:0, max:5000000, step:50000},
+   ],
+   apply:(vv,drv)=>{ drv.equityInj[vv.annee]-=vv.montant; }},
+
+  {key:"cession", icon:"", label:"Cession d'activité",
+   desc:"Vendre une partie de l'activité : encaissement du prix de cession, sortie des actifs cédés (plus/moins-value au résultat), et baisse du CA et des charges fixes associées à partir de l'année de cession.",
+   params:[
+     {key:"annee",    lab:"Année de cession",             kind:"year",  v:2},
+     {key:"prix",     lab:"Prix de cession",              kind:"money", v:400000, min:0, max:10000000, step:50000},
+     {key:"vnc",      lab:"Valeur nette comptable cédée", kind:"money", v:300000, min:0, max:10000000, step:50000},
+     {key:"baisseCA", lab:"Baisse du CA",                 kind:"pct",   v:20, min:0, max:100, step:5},
+     {key:"baisseCF", lab:"Baisse charges fixes / an",    kind:"money", v:30000, min:0, max:1000000, step:10000},
+   ],
+   apply:(vv,drv)=>{
+     drv.proceedsCession[vv.annee]+=vv.prix;
+     drv.nbvCession[vv.annee]+=vv.vnc;
+     drv.gainCession[vv.annee]+=(vv.prix - vv.vnc);        // plus-value (+) ou moins-value (−)
+     for(let t=vv.annee;t<NY;t++){
+       drv.volMult[t]*=(1-vv.baisseCA);                    // l'activité cédée ne génère plus de CA
+       drv.cf[t]=Math.max(0, drv.cf[t]-vv.baisseCF);       // ni ses charges fixes
+     }
+   }},
+];
+
+// ============================================================
+//  DÉCISIONS — instances nommées (templates DECISIONS instanciés N fois)
+// ============================================================
+function decType(type){ return DECISIONS.find(t=>t.key===type) || DECISIONS[0]; }
+function uid(){ return 'di'+Date.now().toString(36)+Math.floor(Math.random()*1e5).toString(36); }
+function defVals(t){ const o={}; t.params.forEach(p=>o[p.key]=p.v); return o; }
+function defaultInstances(){ return DECISIONS.map(t=>({id:uid(), type:t.key, nom:t.label, active:false, vals:defVals(t)})); }
+function escAttr(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+let decInstances = defaultInstances();
+// normalise une instance venue d'un état sauvegardé (complète les params manquants, vérifie le type)
+function normalizeInstance(o){
+  const t=decType(o&&o.type), vals=defVals(t);
+  if(o&&o.vals) t.params.forEach(p=>{ if(o.vals[p.key]!=null) vals[p.key]=o.vals[p.key]; });
+  return {id:(o&&o.id)||uid(), type:t.key, nom:(o&&o.nom)||t.label, active:!!(o&&o.active), vals};
+}
+// reconstruit la liste d'instances depuis un état : format instances, sinon migration ancien format {dec:{key:{...}}}
+function instancesFromState(s){
+  if(s && Array.isArray(s.decInstances)) return s.decInstances.map(normalizeInstance);
+  if(s && s.dec && typeof s.dec==='object'){
+    return DECISIONS.filter(t=>s.dec[t.key]).map(t=>{
+      const o=s.dec[t.key]||{}, vals=defVals(t);
+      t.params.forEach(p=>{ if(o[p.key]!=null) vals[p.key]=o[p.key]; });
+      return {id:uid(), type:t.key, nom:o.nom||t.label, active:!!o.active, vals};
+    });
+  }
+  return defaultInstances();
+}
+// instance (valeurs d'affichage) -> décision prête pour compute (valeurs moteur, apply/applyLoan résolus)
+function toEngineDec(ins){
+  const t=decType(ins.type), vals={};
+  t.params.forEach(p=>{ let v=parseFloat(ins.vals[p.key]); if(isNaN(v))v=0; vals[p.key]= p.kind==='pct'? v/100 : v; });
+  return {id:ins.id, type:ins.type, nom:(ins.nom||t.label), active:!!ins.active, vals, apply:t.apply, applyLoan:t.applyLoan};
+}
+// synchronise le DOM (source de vérité pendant l'édition) vers decInstances, avant toute reconstruction/sauvegarde
+function syncDecFromDOM(){
+  decInstances.forEach(ins=>{
+    const chk=document.getElementById('dec_'+ins.id); if(!chk) return;
+    ins.active=chk.checked;
+    const nm=document.getElementById('decname_'+ins.id); if(nm) ins.nom=nm.value;
+    decType(ins.type).params.forEach(p=>{ const el=document.getElementById('dp_'+ins.id+'_'+p.key); if(el) ins.vals[p.key]=el.value; });
+  });
+}
+function nextName(t){ const n=decInstances.filter(i=>i.type===t.key).length; return n? t.label+' '+(n+1) : t.label; }
+function addDecision(type){ syncDecFromDOM(); const t=decType(type); decInstances.push({id:uid(), type:t.key, nom:nextName(t), active:true, vals:defVals(t)}); buildDecisions(); refresh(); }
+function delDecision(id){ syncDecFromDOM(); decInstances=decInstances.filter(i=>i.id!==id); buildDecisions(); refresh(); }
+
+// ---- Formatage français ----
+const fEUR = x => isFinite(x)? new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(x) : "—";
+const fPCT = x => isFinite(x)? (x*100).toFixed(1).replace('.',',')+' %' : "—";
+const fX   = x => isFinite(x)? x.toFixed(1).replace('.',',')+'×' : "n.s.";
+const fJ   = x => isFinite(x)? Math.round(x)+' j' : "—";
+const cls  = x => x<0 ? "neg" : "pos";
+// infobulle pédagogique (title natif, robuste) — esc() défini plus bas (hoisté)
+const tipHTML = txt => `<span class="tip" title="${esc(txt)}">i</span>`;
+
+// ============================================================
+//  MOTEUR — drivers annuels (base + décisions) puis cascade comptable
+// ============================================================
+// ============================================================
+//  OVERRIDES PAR ANNÉE — un paramètre peut suivre sa trajectoire auto (base+croissance/constante)
+//  ou une série personnalisée saisie année par année.
+// ============================================================
+const PERYEAR_KEYS = ['capex','cfN','persoN','tauxIS','DSO','DPO','DIO','tauxDiv'];
+const ITEM = {}; GROUPS.flatMap(g=>g.items).forEach(it=>ITEM[it.key]=it);
+let overrides = {};   // key -> tableau (longueur NY) de valeurs en unité d'AFFICHAGE (brut), ou absent = auto
+const numOf = k => { const el=document.getElementById('num_'+k); return el? (parseFloat(el.value)||0) : (ITEM[k]?ITEM[k].v:0); };
+// valeur de la trajectoire auto, en unité d'affichage (sert à pré-remplir / prolonger un override)
+function autoVal(key,t){
+  switch(key){
+    case 'cfN':   return numOf('cfN')  *Math.pow(1+numOf('inflCF')/100, t);
+    case 'persoN':return numOf('persoN')*Math.pow(1+numOf('gPerso')/100,t);
+    default:      return numOf(key);   // capex, DSO, DPO, DIO, tauxIS : constante
+  }
+}
+// ajuste les séries « par année » des références au nouvel horizon (prolonge en auto / tronque)
+function reconcileRefs(){
+  refs.forEach(r=>REF_METRICS.forEach(c=>{
+    if(!Array.isArray(r[c.ov])) return;
+    const a=r[c.ov].slice(0,NY);
+    for(let t=a.length;t<NY;t++) a.push(ovRound((+r[c.base]||0)*Math.pow(1+(+r[c.g]||0)/100,t)));
+    r[c.ov]=a;
+  }));
+}
+// ajuste toutes les séries d'override à la longueur NY (au changement d'horizon) : prolonge en auto, tronque si besoin
+function reconcileOverrides(){
+  PERYEAR_KEYS.forEach(k=>{
+    if(!overrides[k]) return;
+    const a=overrides[k].slice(0,NY);
+    for(let t=a.length;t<NY;t++) a.push(autoVal(k,t));
+    overrides[k]=a;
+  });
+}
+const ovRound = v => Math.round(v*100)/100;
+
+// ---- Modale « gérer année par année » (partagée par tous les paramètres overridables) ----
+let ymKey=null;
+function buildYearModal(){
+  const m=document.createElement('div'); m.className='modal-overlay'; m.id='yearModal';
+  m.innerHTML=`<div class="modal" style="max-width:560px">
+    <div class="modal-head"><h2><span id="ymTitle"></span></h2>
+      <button class="modal-close" id="ymClose" title="Fermer">✕</button></div>
+    <p class="modal-sub" id="ymSub"></p>
+    <div class="ym-mode">
+      <button class="loan-modebtn" id="ymAuto">Trajectoire auto</button>
+      <button class="loan-modebtn" id="ymCustom">Personnalisé par année</button>
+    </div>
+    <div id="ymBody" hidden>
+      <div class="ym-apply">Appliquer à toutes les années :
+        <input type="number" id="ymAll" class="numfield">
+        <button class="scn-btn" id="ymApplyAll" style="width:auto;padding:6px 12px">Appliquer</button></div>
+      <div id="ymYears" class="ym-years"></div>
+    </div>
+    <div class="modal-foot"><span id="ymInfo"></span><button class="btn-primary" id="ymDone">Terminé</button></div>
+  </div>`;
+  document.body.appendChild(m);
+  document.getElementById('ymClose').addEventListener('click',()=>m.classList.remove('open'));
+  document.getElementById('ymDone').addEventListener('click',()=>m.classList.remove('open'));
+  m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); });
+  document.getElementById('ymAuto').addEventListener('click',()=>{ delete overrides[ymKey]; renderYearModal(); refresh(); });
+  document.getElementById('ymCustom').addEventListener('click',()=>{
+    if(!overrides[ymKey]) overrides[ymKey]=Array.from({length:NY},(_,t)=>ovRound(autoVal(ymKey,t)));
+    renderYearModal(); refresh();
+  });
+  document.getElementById('ymApplyAll').addEventListener('click',()=>{
+    const v=parseFloat(document.getElementById('ymAll').value);
+    if(!isNaN(v) && overrides[ymKey]){ overrides[ymKey]=overrides[ymKey].map(()=>v); renderYearModal(); refresh(); }
+  });
+}
+function openYearModal(key){
+  ymKey=key; const it=ITEM[key];
+  const unit=it.kind==='pct'?' (en %)':it.kind==='money'?' (en €)':it.kind==='days'?' (en jours)':'';
+  document.getElementById('ymTitle').textContent=it.lab;
+  document.getElementById('ymSub').innerHTML=`Laisse la <b>trajectoire auto</b> (base + croissance ou constante), ou passe en <b>personnalisé</b> pour saisir une valeur par année${unit}.`;
+  renderYearModal();
+  document.getElementById('yearModal').classList.add('open');
+}
+function renderYearModal(){
+  const key=ymKey, custom=!!overrides[key];
+  document.getElementById('ymAuto').classList.toggle('on',!custom);
+  document.getElementById('ymCustom').classList.toggle('on',custom);
+  document.getElementById('ymBody').hidden=!custom;
+  if(!custom) return;
+  const arr=overrides[key];
+  document.getElementById('ymYears').innerHTML=ANNEES.map((a,t)=>`
+    <label class="ym-year"><span>${a}</span>
+      <input type="number" class="numfield ym-in" data-t="${t}" step="${ITEM[key].step}" value="${arr[t]}"></label>`).join('');
+  document.getElementById('ymYears').querySelectorAll('.ym-in').forEach(inp=>inp.addEventListener('input',()=>{
+    overrides[key][+inp.dataset.t]=parseFloat(inp.value)||0; refresh();
+  }));
+}
+
+function buildDrivers(H){
+  const N=NY, A=()=>new Array(N).fill(0);
+  const cf=A(),perso=A(),capex=A();
+  const volMult=A().fill(1);   // multiplicateur de volume commun (décisions gamme / usine / cession)
+  // canaux d'injection « haut de bilan » alimentés par les décisions (capital / rachat / cession)
+  const equityInj=A(),gainCession=A(),nbvCession=A(),proceedsCession=A();
+  const ov=H.ov||{};
+  // séries par référence (avant multiplicateur de volume) : volume, prix, coût unitaire
+  const rs=(H.refs&&H.refs.length)?H.refs:engineRefs(REFS_DEF);
+  const refB=rs.map(r=>{
+    const vol=A(),prix=A(),cout=A();
+    for(let t=0;t<N;t++){
+      vol[t] = r.volOv  ? r.volOv[t]  : r.volN *Math.pow(1+r.gVol, t);
+      prix[t]= r.prixOv ? r.prixOv[t] : r.prixN*Math.pow(1+r.gPrix,t);
+      cout[t]= r.coutOv ? r.coutOv[t] : r.coutN*Math.pow(1+r.gCout,t);
+    }
+    return {nom:r.nom, vol, prix, cout};
+  });
+  // agrégats du CA et des charges variables = somme des références (hors multiplicateur)
+  const ca=A(), chgv=A();
+  for(let t=0;t<N;t++) refB.forEach(rb=>{ ca[t]+=rb.vol[t]*rb.prix[t]; chgv[t]+=rb.vol[t]*rb.cout[t]; });
+  for(let t=0;t<N;t++){
+    cf[t]    = ov.cfN   ? ov.cfN[t]   : H.cfN   * Math.pow(1+H.inflCF,t);
+    perso[t] = ov.persoN? ov.persoN[t]: H.persoN* Math.pow(1+H.gPerso,t);
+    capex[t] = ov.capex ? ov.capex[t] : H.capex;
+  }
+  return {ca,chgv,refB,volMult,cf,perso,capex,equityInj,gainCession,nbvCession,proceedsCession};
+}
+
+function compute(H, decisions){
+  const N=NY, R={};
+  const drv = buildDrivers(H);
+  const loanDefs = (H.loans||LOANS_DEF).slice();
+  (decisions||[]).forEach(d=>{
+    if(!d.active) return;
+    d.apply(d.vals, drv, d.nom);
+    if(d.applyLoan){ const l=d.applyLoan(d.vals, d.nom); if(l) loanDefs.push(l); }   // décision qui crée un emprunt (site)
+  });
+  const fin = buildLoans(loanDefs);
+
+  // séries de taux : override par année si présent, sinon constante
+  const ov=H.ov||{};
+  const ser=(k,def)=> ov[k] ? ov[k] : new Array(N).fill(def);
+  const sDSO=ser('DSO',H.DSO), sDPO=ser('DPO',H.DPO), sDIO=ser('DIO',H.DIO), sTauxIS=ser('tauxIS',H.tauxIS), sTauxDiv=ser('tauxDiv',H.tauxDiv);
+
+  const A=()=>new Array(N).fill(0);
+  const CA=A(),chgv=A(),marge=A(),EBITDA=A(),
+        dot=A(),EBIT=A(),chgfin=A(),RAI=A(),IS=A(),RN=A(),
+        creances=A(),stocks=A(),df=A(),BFR=A(),varBFR=A(),bfrJours=A(),
+        immoOuv=A(),immoClot=A(),detteOuv=A(),detteClot=A(),
+        cpOuv=A(),div=A(),cpClot=A(),
+        fExpl=A(),fInv=A(),fFin=A(),varTreso=A(),tresoOuv=A(),tresoClot=A(),
+        actif=A(),passif=A(),ctrl=A(),detteNette=A(),levier=A(),ROCE=A(),
+        croiss=A(),margeEBITDA=A(),pointMort=A(),margeSecu=A();
+  const BFRouv = H.openStocks + H.openCreances - H.openDettesF;
+  // trésorerie d'ouverture = variable d'ajustement qui ÉQUILIBRE le bilan d'ouverture,
+  // quel que soit le portefeuille d'emprunts (detteOuv[0]) : Actif ouverture = Passif ouverture.
+  const openTreso = H.cpOuv0 + fin.detteOuv[0] - H.immoOuv0 - BFRouv;
+  let grossOuv=0;   // valeur brute cumulée des immos à l'ouverture (amortissement linéaire)
+  let deficit=0;    // stock de déficit reportable (report des pertes sur l'IS futur)
+
+  for(let t=0;t<N;t++){
+    CA[t]   = drv.ca[t]  *drv.volMult[t];   // somme des références × multiplicateur de volume (décisions)
+    chgv[t] = drv.chgv[t]*drv.volMult[t];
+    marge[t]= CA[t]-chgv[t];
+    EBITDA[t]= marge[t]-drv.cf[t]-drv.perso[t];
+    // immos (tableau roulant) — amortissement linéaire classique (valeur brute cumulée / durée)
+    immoOuv[t]  = t===0 ? H.immoOuv0 : immoClot[t-1];
+    grossOuv    = t===0 ? H.immoOuv0 : grossOuv + drv.capex[t-1];
+    grossOuv    = Math.max(0, grossOuv - drv.nbvCession[t]);  // cession : sort la base amortissable des actifs cédés
+    let dotT    = grossOuv/H.duree;
+    dotT        = Math.min(dotT, immoOuv[t]+drv.capex[t]);   // jamais en dessous de 0 de valeur nette
+    dot[t]      = dotT;
+    immoClot[t] = immoOuv[t] + drv.capex[t] - dot[t] - drv.nbvCession[t];
+    EBIT[t]     = EBITDA[t]-dot[t];
+    // dette — portefeuille d'emprunts en annuités constantes (intérêts sur solde d'ouverture, agrégés).
+    detteOuv[t]  = fin.detteOuv[t];
+    detteClot[t] = fin.detteClot[t];
+    chgfin[t]    = fin.interet[t];
+    RAI[t] = EBIT[t]-chgfin[t]+drv.gainCession[t];   // + résultat exceptionnel de cession (plus/moins-value, taxé)
+    // IS avec report déficitaire : une perte alimente un stock imputé sur les bénéfices futurs
+    if(RAI[t]>0){
+      const impute=Math.min(RAI[t], deficit);   // on impute le déficit reporté
+      deficit-=impute;
+      IS[t]=(RAI[t]-impute)*sTauxIS[t];
+    } else {
+      IS[t]=0; deficit+=-RAI[t];
+    }
+    RN[t]  = RAI[t]-IS[t];
+    // BFR
+    creances[t]= CA[t]*sDSO[t]/365;
+    stocks[t]  = chgv[t]*sDIO[t]/365;
+    df[t]      = chgv[t]*sDPO[t]/365;
+    BFR[t]     = creances[t]+stocks[t]-df[t];
+    varBFR[t]  = t===0 ? BFR[t]-BFRouv : BFR[t]-BFR[t-1];
+    bfrJours[t]= CA[t]!==0 ? BFR[t]/CA[t]*365 : NaN;
+    // capitaux propres — dividende floored à 0 (pas de dividende sur perte)
+    const prevRN = t===0 ? H.rnN1 : RN[t-1];
+    div[t]   = Math.max(0, prevRN*sTauxDiv[t]);
+    cpOuv[t] = t===0 ? H.cpOuv0 : cpClot[t-1];
+    cpClot[t]= cpOuv[t] + RN[t] - div[t] + drv.equityInj[t];   // variation de capital (ouverture + / rachat −)
+    // tableau de flux (méthode indirecte)
+    fExpl[t] = RN[t] + dot[t] - varBFR[t] - drv.gainCession[t];   // la plus-value de cession n'est pas un flux d'exploitation
+    fInv[t]  = -drv.capex[t] + drv.proceedsCession[t];            // + encaissement du prix de cession
+    fFin[t]  = fin.nouvelEmp[t] - fin.capital[t] - div[t] + drv.equityInj[t];   // + ouverture de capital / − rachat de parts
+    varTreso[t]= fExpl[t]+fInv[t]+fFin[t];
+    tresoOuv[t]= t===0 ? openTreso : tresoClot[t-1];
+    tresoClot[t]= tresoOuv[t]+varTreso[t];
+    // bilan + contrôle
+    actif[t] = immoClot[t]+stocks[t]+creances[t]+tresoClot[t];
+    passif[t]= cpClot[t]+detteClot[t]+df[t];
+    ctrl[t]  = actif[t]-passif[t];
+    // ratios
+    detteNette[t]= detteClot[t]-tresoClot[t];
+    levier[t]    = EBITDA[t]>0 ? detteNette[t]/EBITDA[t] : NaN;
+    const capEng = immoClot[t]+BFR[t];                       // capitaux engagés
+    ROCE[t]      = capEng>0 ? EBIT[t]*(1-sTauxIS[t])/capEng : NaN;   // NOPAT (EBIT après impôt) / capitaux engagés
+    croiss[t]    = t===0 ? NaN : CA[t]/CA[t-1]-1;
+    margeEBITDA[t]= CA[t]!==0 ? EBITDA[t]/CA[t] : NaN;
+    const tauxMarge = CA[t]!==0 ? marge[t]/CA[t] : NaN;
+    pointMort[t] = tauxMarge>0 ? (drv.cf[t]+drv.perso[t])/tauxMarge : NaN;
+    margeSecu[t] = CA[t]!==0 ? (CA[t]-pointMort[t])/CA[t] : NaN;
+  }
+  // détail par référence (après multiplicateur de volume) pour l'onglet d'analyse
+  const refSeries = drv.refB.map(rb=>{
+    const rca=A(),rvol=A(),rmarge=A();
+    for(let t=0;t<N;t++){ rvol[t]=rb.vol[t]*drv.volMult[t]; rca[t]=rvol[t]*rb.prix[t]; rmarge[t]=rvol[t]*(rb.prix[t]-rb.cout[t]); }
+    return {nom:rb.nom, ca:rca, vol:rvol, prix:rb.prix.slice(), cout:rb.cout.slice(), marge:rmarge};
+  });
+  Object.assign(R,{CA,chgv,marge,cf:drv.cf,perso:drv.perso,capex:drv.capex,EBITDA,dot,EBIT,chgfin,resExcept:drv.gainCession,RAI,IS,RN,div,BFR,varBFR,
+    tresoClot,detteOuv,detteClot,detteNette,levier,ROCE,bfrJours,croiss,margeEBITDA,pointMort,margeSecu,ctrl,fin,refSeries,openTreso});
+  return R;
+}
+
+// ============================================================
+//  CONTRÔLES — hypothèses
+// ============================================================
+function buildInputs(){
+  const root=document.getElementById('inputs'); root.innerHTML='';
+  GROUPS.forEach(g=>{
+    const d=document.createElement('details'); if(g.open)d.open=true;
+    d.dataset.view = g.view||'sim';   // onglet où le groupe s'affiche : sim | dcf | both
+    d.innerHTML=`<summary>${g.titre}</summary>`;
+    const wrap=document.createElement('div'); wrap.className='grp';
+    g.items.forEach(it=>{
+      const id='in_'+it.key;
+      if(it.derived){   // poste calculé (ex. trésorerie d'ouverture = plug d'équilibre) : lecture seule
+        const row=document.createElement('div'); row.className='ctrl ctrl-derived'; row.dataset.key=it.key;
+        row.innerHTML=`<label><span>${it.lab}${it.tip?tipHTML(it.tip):''}</span><b id="lab_${it.key}"></b></label>`;
+        wrap.appendChild(row); d.appendChild(wrap); return;
+      }
+      const per = PERYEAR_KEYS.indexOf(it.key)>=0;
+      const row=document.createElement('div'); row.className='ctrl'; row.dataset.key=it.key;
+      row.innerHTML=`
+        <label for="${id}"><span>${it.lab}${it.tip?tipHTML(it.tip):''}</span><b id="lab_${it.key}"></b></label>
+        <div class="row">
+          <input type="range" id="${id}" min="${it.min}" max="${it.max}" step="${it.step}" value="${it.v}">
+          <div class="stepper">
+            <button type="button" class="st-btn" data-k="${it.key}" data-d="-1">−</button>
+            <input type="number" id="num_${it.key}" class="numfield" min="${it.min}" max="${it.max}" step="${it.step}" value="${it.v}">
+            <button type="button" class="st-btn" data-k="${it.key}" data-d="1">+</button>
+          </div>
+          ${per?`<button type="button" class="yr-btn" data-k="${it.key}" title="Gérer année par année">an</button>`:''}
+        </div>`;
+      wrap.appendChild(row);
+      d.appendChild(wrap);
+    });
+    root.appendChild(d);
+  });
+  GROUPS.flatMap(g=>g.items).forEach(it=>{
+    if(it.derived) return;
+    const rng=document.getElementById('in_'+it.key);
+    const num=document.getElementById('num_'+it.key);
+    const sync=(src,dst)=>{dst.value=src.value; paramChanged(it.key);};
+    rng.addEventListener('input',()=>sync(rng,num));
+    num.addEventListener('input',()=>sync(num,rng));
+  });
+  root.querySelectorAll('.yr-btn').forEach(b=>b.addEventListener('click',()=>openYearModal(b.dataset.k)));
+  root.querySelectorAll('.st-btn').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const it=GROUPS.flatMap(g=>g.items).find(x=>x.key===b.dataset.k);
+      if(it) stepVal(it, parseInt(b.dataset.d,10));
+    });
+  });
+}
+function stepVal(it,dir){
+  const num=document.getElementById('num_'+it.key);
+  let v=(parseFloat(num.value)||0)+dir*it.step;
+  v=Math.max(it.min, Math.min(it.max, v));
+  v=parseFloat(v.toFixed(6));
+  num.value=v; document.getElementById('in_'+it.key).value=v; paramChanged(it.key);
+}
+// un changement de paramètre : si c'est l'horizon, on reconstruit les années avant de recalculer
+function paramChanged(key){ if(key==='nbAnnees') applyHorizon(); else refresh(); }
+function applyHorizon(){
+  const n=Math.max(3, Math.min(10, Math.round(parseFloat(document.getElementById('num_nbAnnees').value)||5)));
+  setVal('nbAnnees', n);
+  NY=n; ANNEES=mkYears(n);
+  reconcileOverrides();   // ajuste les séries par année au nouvel horizon
+  reconcileRefs();        // idem pour les séries par année des références
+  if(document.getElementById('refList')) renderRefList();
+  rebuildYearSelects();
+  refresh();
+}
+// reconstruit les listes déroulantes « année » des décisions selon l'horizon (sélection conservée, bornée)
+function rebuildYearSelects(){
+  decInstances.forEach(ins=>decType(ins.type).params.forEach(p=>{
+    if(p.kind!=='year') return;
+    const sel=document.getElementById('dp_'+ins.id+'_'+p.key); if(!sel) return;
+    const cur=Math.min(parseInt(sel.value||'0',10)||0, NY-1);
+    sel.innerHTML=ANNEES.map((a,i)=>`<option value="${i}" ${i===cur?'selected':''}>${a}</option>`).join('');
+  }));
+}
+
+function readH(){
+  const H={};
+  GROUPS.flatMap(g=>g.items).forEach(it=>{
+    if(it.derived) return;   // poste calculé par le moteur (pas de champ de saisie)
+    // le champ numérique (num_) est la source de vérité : saisie précise possible,
+    // sans le snapping au pas du curseur (in_).
+    let v=parseFloat(document.getElementById('num_'+it.key).value);
+    if(isNaN(v))v=0;
+    H[it.key] = it.kind==='pct' ? v/100 : v;
+  });
+  H.loans = financeLoans;
+  H.refs = engineRefs(refs);   // références produits (unités moteur)
+  H.ov = {};   // overrides par année (unités moteur : pct /100)
+  PERYEAR_KEYS.forEach(k=>{ if(overrides[k]){ const pct=ITEM[k].kind==='pct'; H.ov[k]=overrides[k].slice(0,NY).map(v=> pct? v/100 : v); } });
+  return H;
+}
+function setVal(key,val){
+  const r=document.getElementById('in_'+key), n=document.getElementById('num_'+key);
+  if(r){r.value=val;} if(n){n.value=val;}
+}
+
+// ============================================================
+//  CONTRÔLES — décisions
+// ============================================================
+function decParamHTML(dk,p,val){
+  const v=(val!=null && val!=='')? val : p.v;
+  const id='dp_'+dk+'_'+p.key;
+  if(p.kind==='year'){
+    const cur=Math.min(parseInt(v,10)||0, NY-1);
+    const opts=ANNEES.map((a,i)=>`<option value="${i}" ${i===cur?'selected':''}>${a}</option>`).join('');
+    return `<div class="dp"><label>${p.lab}</label><select id="${id}">${opts}</select></div>`;
+  }
+  const suf=p.kind==='pct'?' %':'';
+  return `<div class="dp"><label>${p.lab}${suf?' ('+suf.trim()+')':''}</label>
+     <div class="stepper">
+       <button type="button" class="st-btn dp-btn" data-dk="${dk}" data-pk="${p.key}" data-d="-1">−</button>
+       <input type="number" id="${id}" class="numfield" value="${v}" min="${p.min}" max="${p.max}" step="${p.step}">
+       <button type="button" class="st-btn dp-btn" data-dk="${dk}" data-pk="${p.key}" data-d="1">+</button>
+     </div></div>`;
+}
+function decCardHTML(ins){
+  const t=decType(ins.type);
+  return `<div class="dec ${ins.active?'on':''}" id="card_${ins.id}">
+      <div class="dec-head">
+        <input type="checkbox" class="dec-chk" id="dec_${ins.id}" ${ins.active?'checked':''}>
+        <input class="dec-name" id="decname_${ins.id}" value="${escAttr(ins.nom)}" title="Renommer cette décision">
+        <button type="button" class="dec-del" data-del="${ins.id}" title="Supprimer">✕</button>
+      </div>
+      <div class="dec-body" id="decbody_${ins.id}" style="display:${ins.active?'block':'none'}">
+        <div class="dec-desc">${t.desc}</div>
+        ${t.params.map(p=>decParamHTML(ins.id,p,ins.vals[p.key])).join('')}
+      </div></div>`;
+}
+function buildDecisions(){
+  const root=document.getElementById('decisions'); root.innerHTML='';
+  decInstances.forEach(ins=>root.insertAdjacentHTML('beforeend', decCardHTML(ins)));
+  const opts=DECISIONS.map(t=>`<option value="${t.key}">${t.label}</option>`).join('');
+  root.insertAdjacentHTML('beforeend',
+    `<div class="dec-add"><select id="decAddType">${opts}</select>`+
+    `<button type="button" class="dec-add-btn" id="decAddBtn">＋ Ajouter</button></div>`);
+  // câblage par instance : toggle, nom éditable, champs
+  decInstances.forEach(ins=>{
+    const chk=document.getElementById('dec_'+ins.id);
+    const body=document.getElementById('decbody_'+ins.id);
+    const card=document.getElementById('card_'+ins.id);
+    chk.addEventListener('change',()=>{
+      ins.active=chk.checked;
+      body.style.display=chk.checked?'block':'none';
+      card.classList.toggle('on',chk.checked); refresh();
+    });
+    const nm=document.getElementById('decname_'+ins.id);
+    if(nm) nm.addEventListener('input',()=>{ ins.nom=nm.value; refresh(); });   // le nom pilote la réf (gamme) et la barre de simulation
+    decType(ins.type).params.forEach(p=>{
+      const el=document.getElementById('dp_'+ins.id+'_'+p.key);
+      if(el) el.addEventListener('input',refresh);
+    });
+  });
+  // steppers +/- (data-dk = id d'instance, param résolu via son type)
+  root.querySelectorAll('.dp-btn').forEach(b=>b.addEventListener('click',()=>{
+    const ins=decInstances.find(i=>i.id===b.dataset.dk); if(!ins) return;
+    const p=decType(ins.type).params.find(x=>x.key===b.dataset.pk); if(!p) return;
+    const el=document.getElementById('dp_'+b.dataset.dk+'_'+b.dataset.pk);
+    let v=(parseFloat(el.value)||0)+parseInt(b.dataset.d,10)*p.step;
+    v=Math.max(p.min, Math.min(p.max, v)); v=parseFloat(v.toFixed(6));
+    el.value=v; refresh();
+  }));
+  // supprimer une instance / ajouter une nouvelle décision
+  root.querySelectorAll('.dec-del').forEach(b=>b.addEventListener('click',()=>delDecision(b.dataset.del)));
+  const addBtn=document.getElementById('decAddBtn');
+  if(addBtn) addBtn.addEventListener('click',()=>addDecision(document.getElementById('decAddType').value));
+}
+// ============================================================
+//  ÉDITEUR D'EMPRUNTS (modale) — portefeuille en annuités constantes
+// ============================================================
+let financeLoans = JSON.parse(JSON.stringify(LOANS_DEF));   // source de vérité du portefeuille
+const fEURm = x => isFinite(x)? new Intl.NumberFormat('fr-FR',{maximumFractionDigits:0}).format(x)+' €/mois' : "—";
+
+function loanStepper(idx,field,val,step){
+  return `<div class="stepper">
+    <button type="button" class="st-btn loan-st" data-idx="${idx}" data-field="${field}" data-step="${step}" data-d="-1">−</button>
+    <input type="number" class="numfield loan-num" data-idx="${idx}" data-field="${field}" step="${step}" value="${val}">
+    <button type="button" class="st-btn loan-st" data-idx="${idx}" data-field="${field}" data-step="${step}" data-d="1">+</button>
+  </div>`;
+}
+function loanCardHTML(l,idx){
+  const depOpts = `<option value="ouv" ${l.depart==='ouv'?'selected':''}>Ouverture</option>`
+    + ANNEES.map((a,i)=>`<option value="${i}" ${String(l.depart)===String(i)?'selected':''}>${a}</option>`).join('');
+  const calc = `<div class="loan-calc">Mensualité calculée <b>${fEURm(loanMensualite(l))}</b></div>`;
+  return `<div class="loan-card" data-idx="${idx}">
+    <div class="loan-top">
+      <input class="loan-nom" data-idx="${idx}" data-field="nom" value="${esc(l.nom||'Emprunt')}" placeholder="Nom de l'emprunt">
+      <button class="loan-del" data-idx="${idx}" title="Supprimer cet emprunt">✕</button>
+    </div>
+    <div class="loan-grid">
+      <label>Montant emprunté ${loanStepper(idx,'montant',l.montant,10000)}</label>
+      <label>Taux d'intérêt (%) ${loanStepper(idx,'taux',l.taux,0.25)}</label>
+      <label>Année de tirage
+        <select class="loan-sel" data-idx="${idx}" data-field="depart">${depOpts}</select></label>
+    </div>
+    <div class="loan-grid">
+      <label>Durée (années) ${loanStepper(idx,'duree',l.duree,1)}</label>
+      ${calc}
+    </div>
+  </div>`;
+}
+function renderLoanList(){
+  const root=document.getElementById('loanList'); if(!root) return;
+  root.innerHTML = financeLoans.length
+    ? financeLoans.map((l,i)=>loanCardHTML(l,i)).join('')
+    : '<div class="scn-empty">Aucun emprunt. Ajoute-en un — ou laisse vide (aucune dette).</div>';
+}
+function updateLoanCalc(idx){
+  const card=document.querySelector(`.loan-card[data-idx="${idx}"]`); if(!card) return;
+  const l=financeLoans[idx], b=card.querySelector('.loan-calc b'); if(!b) return;
+  b.textContent = fEURm(loanMensualite(l));
+}
+function buildFinanceModal(){
+  const modal=document.createElement('div'); modal.className='modal-overlay'; modal.id='finModal';
+  modal.innerHTML=`
+    <div class="modal">
+      <div class="modal-head"><h2>Portefeuille d'emprunts</h2>
+        <button class="modal-close" id="finClose" title="Fermer">✕</button></div>
+      <p class="modal-sub">Chaque emprunt est modélisé en <b>annuités constantes</b> : mensualité fixe, les intérêts baissent et le capital remboursé monte au fil du temps.
+        « Ouverture » = dette déjà en cours au départ (pas d'encaissement). Le montant, le taux et la <b>durée</b> sont saisis ; la mensualité (annuité) est calculée automatiquement.</p>
+      <div id="loanList"></div>
+      <button class="scn-btn" id="loanAdd" style="margin-top:8px;width:auto;padding:9px 16px">＋ Ajouter un emprunt</button>
+      <div class="modal-foot"><span id="finSummary"></span>
+        <button class="btn-primary" id="finDone">Terminé</button></div>
+    </div>`;
+  document.body.appendChild(modal);
+  renderLoanList();
+  const root=document.getElementById('loanList');
+  root.addEventListener('input',e=>{
+    const el=e.target; if(!el.classList.contains('loan-num') && !el.classList.contains('loan-nom')) return;
+    const idx=+el.dataset.idx, f=el.dataset.field;
+    financeLoans[idx][f]= f==='nom'? el.value : (parseFloat(el.value)||0);
+    updateLoanCalc(idx); finSummary(); refresh();
+  });
+  root.addEventListener('change',e=>{
+    const el=e.target; if(!el.classList.contains('loan-sel')) return;
+    financeLoans[+el.dataset.idx].depart = el.value==='ouv'?'ouv':parseInt(el.value,10);
+    finSummary(); refresh();
+  });
+  root.addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    if(b.classList.contains('loan-st')){
+      const idx=+b.dataset.idx, f=b.dataset.field, step=parseFloat(b.dataset.step), d=parseInt(b.dataset.d,10);
+      let v=(parseFloat(financeLoans[idx][f])||0)+d*step; v=Math.max(0, parseFloat(v.toFixed(6)));
+      financeLoans[idx][f]=v;
+      const num=root.querySelector(`.loan-num[data-idx="${idx}"][data-field="${f}"]`); if(num) num.value=v;
+      updateLoanCalc(idx); finSummary(); refresh();
+    } else if(b.classList.contains('loan-del')){
+      financeLoans.splice(+b.dataset.idx,1); renderLoanList(); finSummary(); refresh();
+    }
+  });
+  document.getElementById('loanAdd').addEventListener('click',()=>{
+    financeLoans.push({nom:'Nouvel emprunt', montant:200000, taux:5, duree:7, depart:1});
+    renderLoanList(); finSummary(); refresh();
+  });
+  document.getElementById('finOpen').addEventListener('click',()=>modal.classList.add('open'));
+  document.getElementById('finClose').addEventListener('click',()=>modal.classList.remove('open'));
+  document.getElementById('finDone').addEventListener('click',()=>modal.classList.remove('open'));
+  modal.addEventListener('click',e=>{ if(e.target===modal) modal.classList.remove('open'); });
+  finSummary();
+}
+function finSummary(){
+  const fin=buildLoans(financeLoans);
+  const totalDette=financeLoans.reduce((a,l)=>a+(+l.montant||0),0);
+  const totalInt=fin.interet.reduce((a,b)=>a+b,0);
+  const el=document.getElementById('finSummary');
+  if(el) el.innerHTML=`${financeLoans.length} emprunt${financeLoans.length>1?'s':''} · capital <b>${fEUR(totalDette)}</b> · intérêts totaux <b>${fEUR(totalInt)}</b>`;
+}
+
+// ============================================================
+//  ÉDITEUR DE RÉFÉRENCES PRODUITS
+// ============================================================
+function refStepper(idx,field,val,step){
+  return `<div class="stepper">
+    <button type="button" class="st-btn ref-st" data-idx="${idx}" data-field="${field}" data-step="${step}" data-d="-1">−</button>
+    <input type="number" class="numfield ref-num" data-idx="${idx}" data-field="${field}" step="${step}" value="${val}">
+    <button type="button" class="st-btn ref-st" data-idx="${idx}" data-field="${field}" data-step="${step}" data-d="1">+</button>
+  </div>`;
+}
+function refMetricHTML(r,idx,cfg){
+  const on=Array.isArray(r[cfg.ov]);
+  const suf=cfg.unit?` (${cfg.unit})`:'';
+  const years = on ? `<div class="ref-years">${ANNEES.map((a,t)=>`
+      <label class="ym-year"><span>${a}</span>
+        <input type="number" class="numfield ref-yr-in" data-idx="${idx}" data-metric="${cfg.m}" data-t="${t}" step="${cfg.step}" value="${r[cfg.ov][t]}"></label>`).join('')}</div>` : '';
+  const auto = on ? '' : `<div class="ref-auto">
+      <label>En N${suf} ${refStepper(idx,cfg.base,r[cfg.base],cfg.step)}</label>
+      <label>Croissance /an (%) ${refStepper(idx,cfg.g,r[cfg.g],cfg.gstep)}</label></div>`;
+  return `<div class="ref-metric">
+    <div class="ref-metric-head"><span class="ref-metric-lab">${cfg.lab}</span>
+      <button type="button" class="ref-yr ${on?'on':''}" data-idx="${idx}" data-metric="${cfg.m}" title="Basculer entre trajectoire auto et saisie par année">${on?'par année':'auto'}</button></div>
+    ${auto}${years}</div>`;
+}
+function refCardHTML(r,idx){
+  return `<div class="ref-card" data-idx="${idx}">
+    <div class="loan-top">
+      <input class="loan-nom ref-nom" data-idx="${idx}" value="${esc(r.nom||'Référence')}" placeholder="Nom de la référence">
+      <button class="loan-del ref-del" data-idx="${idx}" title="Supprimer cette référence">✕</button></div>
+    ${REF_METRICS.map(c=>refMetricHTML(r,idx,c)).join('')}
+    <div class="ref-card-foot" id="refFoot_${idx}"></div>
+  </div>`;
+}
+function refFootHTML(r){
+  const v=refN(r,'volN','volOv'), p=refN(r,'prixN','prixOv'), c=refN(r,'coutN','coutOv');
+  const caN=v*p, mN=v*(p-c), tx=caN?mN/caN*100:0;
+  return `CA en N <b>${fEUR(caN)}</b> · marge sur CV <b>${fEUR(mN)}</b> <span class="ref-tx">(${tx.toFixed(0)} %)</span>`;
+}
+function updateRefFoot(idx){ const f=document.getElementById('refFoot_'+idx); if(f) f.innerHTML=refFootHTML(refs[idx]); }
+function renderRefList(){
+  const root=document.getElementById('refList'); if(!root) return;
+  root.innerHTML = refs.length ? refs.map((r,i)=>refCardHTML(r,i)).join('')
+    : '<div class="scn-empty">Aucune référence. Ajoutes-en une (sans référence, le CA est nul).</div>';
+  refs.forEach((r,i)=>updateRefFoot(i));
+}
+function refSummary(){
+  let caN=0,mN=0; refs.forEach(r=>{ const v=refN(r,'volN','volOv'), p=refN(r,'prixN','prixOv'), c=refN(r,'coutN','coutOv'); caN+=v*p; mN+=v*(p-c); });
+  const tx=caN?(mN/caN*100):0;
+  const txt=`${refs.length} référence${refs.length>1?'s':''} · CA en N <b>${fEUR(caN)}</b> · marge <b>${fEUR(mN)}</b> <span class="ref-tx">(${tx.toFixed(0)} %)</span>`;
+  const a=document.getElementById('refModalSum'); if(a) a.innerHTML=txt;
+  const b=document.getElementById('refSummaryPanel'); if(b) b.innerHTML=txt;
+}
+function buildRefModal(){
+  const modal=document.createElement('div'); modal.className='modal-overlay'; modal.id='refModal';
+  modal.innerHTML=`<div class="modal" style="max-width:760px">
+    <div class="modal-head"><h2>Références produits</h2>
+      <button class="modal-close" id="refClose" title="Fermer">✕</button></div>
+    <p class="modal-sub">Chaque référence a son <b>volume</b>, son <b>prix unitaire</b> et son <b>coût variable unitaire</b> (marge = prix − coût). Le CA et les charges variables du business plan sont la <b>somme</b> des références. Passe une donnée en <b>« par année »</b> pour saisir une valeur différente chaque année ; sinon elle suit sa trajectoire auto (valeur en N + croissance).</p>
+    <div id="refList"></div>
+    <button class="scn-btn" id="refAdd" style="margin-top:8px;width:auto;padding:9px 16px">＋ Ajouter une référence</button>
+    <div class="modal-foot"><span id="refModalSum"></span><button class="btn-primary" id="refDone">Terminé</button></div>
+  </div>`;
+  document.body.appendChild(modal);
+  renderRefList();
+  const root=document.getElementById('refList');
+  root.addEventListener('input',e=>{
+    const el=e.target;
+    if(el.classList.contains('ref-nom')){ refs[+el.dataset.idx].nom=el.value; refSummary(); refresh(); return; }
+    if(el.classList.contains('ref-num')){ refs[+el.dataset.idx][el.dataset.field]=parseFloat(el.value)||0; updateRefFoot(+el.dataset.idx); refSummary(); refresh(); return; }
+    if(el.classList.contains('ref-yr-in')){ const r=refs[+el.dataset.idx], ov=metricOv(el.dataset.metric); if(Array.isArray(r[ov])){ r[ov][+el.dataset.t]=parseFloat(el.value)||0; updateRefFoot(+el.dataset.idx); refSummary(); refresh(); } return; }
+  });
+  root.addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    if(b.classList.contains('ref-st')){
+      const idx=+b.dataset.idx, f=b.dataset.field, step=parseFloat(b.dataset.step), d=parseInt(b.dataset.d,10);
+      let v=(parseFloat(refs[idx][f])||0)+d*step; v=Math.max(0, parseFloat(v.toFixed(6))); refs[idx][f]=v;
+      const num=root.querySelector(`.ref-num[data-idx="${idx}"][data-field="${f}"]`); if(num) num.value=v;
+      updateRefFoot(idx); refSummary(); refresh();
+    } else if(b.classList.contains('ref-yr')){
+      const idx=+b.dataset.idx, m=b.dataset.metric, r=refs[idx], ov=metricOv(m), cfg=REF_METRICS.find(c=>c.m===m);
+      if(Array.isArray(r[ov])) r[ov]=null;   // repasse en auto
+      else r[ov]=Array.from({length:NY},(_,t)=>ovRound((+r[cfg.base]||0)*Math.pow(1+(+r[cfg.g]||0)/100,t)));
+      renderRefList(); refSummary(); refresh();
+    } else if(b.classList.contains('ref-del')){
+      refs.splice(+b.dataset.idx,1); renderRefList(); refSummary(); refresh();
+    }
+  });
+  document.getElementById('refAdd').addEventListener('click',()=>{
+    refs.push({id:'r'+Date.now(), nom:'Nouvelle référence', volN:2000, gVol:5, prixN:60, gPrix:2, coutN:30, gCout:2, volOv:null, prixOv:null, coutOv:null});
+    renderRefList(); refSummary(); refresh();
+  });
+  document.getElementById('refOpen').addEventListener('click',()=>modal.classList.add('open'));
+  document.getElementById('refClose').addEventListener('click',()=>modal.classList.remove('open'));
+  document.getElementById('refDone').addEventListener('click',()=>modal.classList.remove('open'));
+  modal.addEventListener('click',e=>{ if(e.target===modal) modal.classList.remove('open'); });
+  refSummary();
+}
+
+function readDecisions(){
+  syncDecFromDOM();                          // DOM -> decInstances (source de vérité pendant l'édition)
+  return decInstances.map(toEngineDec);      // -> décisions prêtes pour compute
+}
+
+// ============================================================
+//  RENDU
+// ============================================================
+let charts={}; let lastR=null, lastR0=null, lastAnyDec=false, lastH=null;
+let currentView='sim', currentSub='apercu';
+function refresh(){
+  const H=readH();
+  const decs=readDecisions();
+  const R  = compute(H, decs);
+  lastR=R; lastH=H;   // dernier calcul, pour l'export CSV et le changement d'onglet
+  const R0 = compute(H, []);              // trajectoire de base (sans décision, même échéancier)
+  const activeList = decs.filter(d=>d.active);
+  const anyDec = activeList.length>0;
+  lastR0=R0; lastAnyDec=anyDec;
+
+  GROUPS.flatMap(g=>g.items).forEach(it=>{
+    const lab=document.getElementById('lab_'+it.key);
+    if(it.derived){ if(lab && it.key==='tresoOuv0') lab.textContent=fEUR(R.openTreso); return; }
+    const ovOn = PERYEAR_KEYS.indexOf(it.key)>=0 && !!overrides[it.key];
+    const row=document.querySelector('.ctrl[data-key="'+it.key+'"]');
+    if(row) row.classList.toggle('ov-on', ovOn);
+    const yb=row&&row.querySelector('.yr-btn'); if(yb) yb.classList.toggle('on', ovOn);
+    if(ovOn){ lab.textContent='par année'; return; }
+    const v=document.getElementById('num_'+it.key).value;   // aligné sur la source de vérité
+    const suf=it.kind==='pct'?' %':it.kind==='days'?' j':it.kind==='years'?' ans':'';
+    const disp = (it.kind==='money')? fEUR(parseFloat(v)) : (parseFloat(v).toLocaleString('fr-FR')+suf);
+    lab.textContent=disp;
+  });
+
+  // barre de simulation
+  const bar=document.getElementById('simbar');
+  bar.classList.toggle('on',anyDec);
+  if(anyDec){
+    const noms=activeList.map(d=>{
+      return esc(d.nom)+' (dès '+ANNEES[d.vals.annee]+')';
+    }).join(' · ');
+    document.getElementById('simtxt').innerHTML=
+      `<b>Simulation active</b> — ${noms}. Les KPI affichent l'écart <i>vs</i> la trajectoire de base.`;
+  }
+
+  renderKPIs(R,R0,anyDec); renderConseiller(R,H);
+  renderTable(R); renderFinance(R); renderRefsAnalysis(R); renderDCF(R,H);   // parties DOM (sûres même onglet masqué)
+  renderActiveCharts();                                     // graphes du seul onglet visible
+  saveState(); updatePrintHead();
+}
+// dessine uniquement les graphes de la vue visible (Chart.js dimensionne mal un canvas masqué)
+function renderActiveCharts(){
+  if(!lastR) return;
+  if(currentView==='sim'){
+    if(currentSub==='apercu')     renderCharts(lastR,lastR0,lastAnyDec);
+    else if(currentSub==='refs')  renderRefsCharts(lastR);
+    else                          renderFinanceCharts(lastR);
+  } else if(currentView==='dcf'){ renderDCFCharts(lastR,lastH); }
+}
+function switchView(name){
+  currentView=name;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.view===name));
+  document.querySelectorAll('.view').forEach(v=>{ v.hidden = (v.id!=='view-'+name); });
+  // panneau de gauche contextuel : sections et groupes d'hypothèses filtrés par onglet
+  const show=v=>(v===name||v==='both');
+  document.querySelectorAll('.aside-sec').forEach(s=>{ s.hidden = !show(s.dataset.view||'sim'); });
+  document.querySelectorAll('#inputs details').forEach(d=>{ d.hidden = !show(d.dataset.view||'sim'); });
+  renderActiveCharts();
+}
+// sous-onglets de la vue Simulation (Vue d'ensemble | Financement)
+function switchSub(name){
+  currentSub=name;
+  document.querySelectorAll('.subtab').forEach(b=>b.classList.toggle('on',b.dataset.sub===name));
+  document.querySelectorAll('.subview').forEach(v=>{ v.hidden = (v.id!=='sub-'+name); });
+  renderActiveCharts();
+}
+
+// --- KPI avec écart vs base ---
+// yr:true → le libellé reçoit le suffixe de la dernière année (dynamique). get() lit R[..][NY-1] au moment de l'appel.
+const KPI_DEFS = [
+  {lab:"CA",               yr:true, get:R=>R.CA[NY-1],          fmt:fEUR, dfmt:dEUR, hiGood:true,
+    tip:"Chiffre d'affaires prévu en dernière année (volume × prix)."},
+  {lab:"Marge EBITDA",     yr:true, get:R=>R.margeEBITDA[NY-1], fmt:fPCT, dfmt:dPTS, hiGood:true,
+    tip:"EBITDA / CA. Profitabilité opérationnelle avant amortissements, intérêts et impôts."},
+  {lab:"Résultat net",     yr:true, get:R=>R.RN[NY-1],          fmt:fEUR, dfmt:dEUR, hiGood:true,
+    tip:"Bénéfice final après charges financières et impôt."},
+  {lab:"Trésorerie — point bas", get:R=>Math.min(...R.tresoClot), fmt:fEUR, dfmt:dEUR, hiGood:true,
+    tip:"Le plus bas niveau de trésorerie sur tout l'horizon. S'il est négatif, il dimensionne le financement à sécuriser."},
+  {lab:"Dette nette / EBITDA", yr:true, get:R=>R.levier[NY-1], fmt:fX,   dfmt:dX,   hiGood:false,
+    tip:"Nombre d'années d'EBITDA nécessaires pour rembourser la dette nette. Seuil d'alerte bancaire ~3×."},
+  {lab:"BFR (jours de CA)",yr:true, get:R=>R.bfrJours[NY-1],    fmt:fJ,   dfmt:dJ,   hiGood:false,
+    tip:"Besoin en Fonds de Roulement en jours de CA : le cash immobilisé par le cycle (créances + stocks − dettes fournisseurs)."},
+  {lab:"ROCE ap. impôt",   yr:true, get:R=>R.ROCE[NY-1],        fmt:fPCT, dfmt:dPTS, hiGood:true,
+    tip:"Return On Capital Employed : rentabilité des capitaux engagés, après impôt (NOPAT / (immos + BFR)). À comparer au WACC : ROCE > WACC = création de valeur."},
+];
+function dEUR(x){ return (x>=0?'+':'−')+fEUR(Math.abs(x)); }
+function dPTS(x){ return (x>=0?'+':'−')+(Math.abs(x)*100).toFixed(1).replace('.',',')+' pts'; }
+function dX(x){ return (x>=0?'+':'−')+Math.abs(x).toFixed(1).replace('.',',')+'×'; }
+function dJ(x){ return (x>=0?'+':'−')+Math.round(Math.abs(x))+' j'; }
+
+function renderKPIs(R,R0,anyDec){
+  let html = KPI_DEFS.map(k=>{
+    const val=k.get(R);
+    let delta='';
+    if(anyDec){
+      const d=val-k.get(R0);
+      if(isFinite(d) && Math.abs(d)>1e-6){
+        const good = k.hiGood ? d>0 : d<0;
+        delta=`<div class="k-delta ${good?'good':'bad'}">${k.dfmt(d)} vs base</div>`;
+      } else {
+        delta=`<div class="k-delta flat">= vs base</div>`;
+      }
+    }
+    const lab = k.yr ? `${k.lab} · ${ANNEES[NY-1]}` : k.lab;
+    return `<div class="kpi"><div class="k-lab">${lab}${k.tip?tipHTML(k.tip):''}</div>
+      <div class="k-val">${k.fmt(val)}</div>${delta}</div>`;
+  }).join('');
+  const bilanOK=R.ctrl.every(x=>Math.abs(x)<1);
+  html += `<div class="kpi"><div class="k-lab">Équilibre du bilan</div>
+    <div class="k-val"><span class="badge ${bilanOK?'ok':'ko'}">${bilanOK?'✓ équilibré':'✗ écart'}</span></div>
+    <div class="k-sub">Actif − Passif sur ${NY} ans</div></div>`;
+  document.getElementById('kpis').innerHTML=html;
+}
+
+// ============================================================
+//  CONSEILLER CFO — moteur de règles : diagnostic → constat chiffré → levier
+// ============================================================
+function diagnose(R,H){
+  const F=[], last=NY-1;
+  const pointBas=Math.min(...R.tresoClot);
+  const yBas=ANNEES[R.tresoClot.indexOf(pointBas)];
+
+  // 1. Trou de trésorerie
+  if(pointBas<0){
+    const besoin=Math.ceil(-pointBas/10000)*10000;
+    F.push({level:'critical',titre:'Trou de trésorerie',
+      constat:`La trésorerie plonge à <b>${fEUR(pointBas)}</b> en ${yBas}. Sans financement, l'entreprise est en cessation de paiement.`,
+      levier:`Sécuriser une ligne de crédit d'au moins <b>${fEUR(besoin)}</b> avant ${yBas}. Autres leviers : étaler le CAPEX, ou réduire le DSO — chaque 10 jours de délai clients en moins libère ~${fEUR(R.CA[last]*10/365)} de cash.`});
+  }
+
+  // 2. Endettement élevé
+  const finLev=R.levier.filter(x=>isFinite(x));
+  const levMax=finLev.length?Math.max(...finLev):NaN;
+  if(isFinite(levMax) && levMax>3){
+    const yl=ANNEES[R.levier.indexOf(levMax)];
+    F.push({level:'warning',titre:'Endettement élevé',
+      constat:`Le ratio dette nette/EBITDA atteint <b>${fX(levMax)}</b> en ${yl} — au-dessus du seuil d'alerte bancaire de 3×. Un prêteur hésitera à financer davantage.`,
+      levier:`Renforcer le remboursement (échéancier de financement) ou faire progresser l'EBITDA. Éviter de financer la croissance uniquement par la dette.`});
+  }
+
+  // 3. Années déficitaires
+  const pertes=R.RN.map((v,i)=>v<0?i:-1).filter(i=>i>=0);
+  if(pertes.length){
+    F.push({level:'serious',titre:'Années déficitaires',
+      constat:`Résultat net négatif en ${pertes.map(i=>ANNEES[i]).join(', ')} (au plus bas : <b>${fEUR(Math.min(...R.RN))}</b>).`,
+      levier:`Revenir vers le point mort : agir sur les prix, le taux de charges variables ou les charges fixes.`});
+  }
+
+  // 4. Dividendes à crédit
+  const badDiv=R.div.map((v,i)=>(v>0 && R.tresoClot[i]<0)?i:-1).filter(i=>i>=0);
+  if(badDiv.length){
+    F.push({level:'warning',titre:'Dividendes à crédit',
+      constat:`Des dividendes sont versés (${fEUR(R.div[badDiv[0]])} en ${ANNEES[badDiv[0]]}) alors que la trésorerie est négative : distribution de cash non disponible.`,
+      levier:`Suspendre ou réduire le dividende (taux de dividende) tant que la trésorerie n'est pas rétablie.`});
+  }
+
+  // 5. ROCE (après impôt) < coût du capital (WACC)
+  const roce=R.ROCE[last];
+  if(isFinite(roce) && roce<H.wacc){
+    F.push({level:'serious',titre:'Rentabilité sous le coût du capital',
+      constat:`Le ROCE après impôt (<b>${fPCT(roce)}</b>) est sous le coût du capital / WACC (${fPCT(H.wacc)}) : chaque euro engagé rapporte moins qu'il ne coûte à financer — <b>destruction de valeur</b> (ROCE &lt; WACC).`,
+      levier:`Améliorer la marge d'exploitation ou alléger les capitaux engagés (CAPEX, BFR) avant d'investir davantage.`});
+  }
+
+  // 6. Marge de sécurité faible (N+4)
+  const ms=R.margeSecu[last];
+  if(isFinite(ms) && ms<0.10){
+    F.push({level: ms<0?'critical':'warning',titre:'Faible marge de sécurité',
+      constat:`En ${ANNEES[last]}, la marge de sécurité n'est que de <b>${fPCT(ms)}</b> : une baisse de CA de ${fPCT(Math.max(0,ms))} suffirait à repasser sous le point mort.`,
+      levier:`S'éloigner du point mort : hausse de prix, baisse du taux de charges variables, ou volume additionnel.`});
+  }
+
+  // 7. BFR qui immobilise du cash (N+4)
+  const bfrj=R.bfrJours[last];
+  if(isFinite(bfrj) && bfrj>60){
+    F.push({level:'warning',titre:'BFR qui gèle du cash',
+      constat:`Le BFR pèse <b>${fJ(bfrj)}</b> de CA en ${ANNEES[last]} (${fEUR(R.BFR[last])}) — du cash immobilisé dans le cycle d'exploitation.`,
+      levier:`Négocier des délais fournisseurs plus longs (DPO, actuel ${H.DPO} j), réduire les délais clients (DSO ${H.DSO} j) et le stock (DIO ${H.DIO} j).`});
+  }
+
+  // 8. Marge d'EBITDA en érosion
+  if(isFinite(R.margeEBITDA[0]) && R.margeEBITDA[last] < R.margeEBITDA[0]-0.02){
+    F.push({level:'info',titre:`Marge d'EBITDA en érosion`,
+      constat:`La marge d'EBITDA recule de ${fPCT(R.margeEBITDA[0])} à <b>${fPCT(R.margeEBITDA[last])}</b> sur l'horizon : la profitabilité se dégrade.`,
+      levier:`Surveiller l'inflation des charges fixes et de personnel face à la croissance du CA.`});
+  }
+
+  // Rien à signaler → message positif
+  if(!F.length){
+    F.push({level:'good',titre:'Situation financière saine',
+      constat:`Trésorerie positive sur tout l'horizon, levier maîtrisé (&lt;3×), ROCE au-dessus du coût du capital. Bon profil.`,
+      levier:`Possibilité d'accélérer (investissement, nouvelle gamme) : en tester l'impact via les décisions.`});
+  }
+  return F;
+}
+function renderConseiller(R,H){
+  const order={critical:0,serious:1,warning:2,info:3,good:4};
+  const sev={critical:'Critique',serious:'Sérieux',warning:'Vigilance',info:'Information',good:'Sain'};
+  const F=diagnose(R,H).sort((a,b)=>order[a.level]-order[b.level]);
+  const html=`<div class="conseil-h">Conseiller CFO<span class="conseil-count">${F.length} point${F.length>1?'s':''}</span></div>`
+    + F.map(f=>`<div class="finding ${f.level}">
+        <div class="f-titre"><span class="f-sev">${sev[f.level]}</span>${f.titre}</div>
+        <div class="f-constat">${f.constat}</div>
+        <div class="f-levier"><b>Levier :</b> ${f.levier}</div>
+      </div>`).join('');
+  document.getElementById('conseil').innerHTML=html;
+}
+
+function renderTable(R){
+  const head=`<tr><th>(en €)</th>${ANNEES.map(a=>`<th>${a}</th>`).join('')}</tr>`;
+  const line=(lab,arr,fmt=fEUR,color=false,sec=false,tot=false)=>{
+    const tds=arr.map(v=>{
+      const c = color? cls(v):'';
+      return `<td class="${c}">${fmt(v)}</td>`;
+    }).join('');
+    return `<tr class="${sec?'sec':''} ${tot?'tot':''}"><td>${lab}</td>${tds}</tr>`;
+  };
+  let h=head;
+  h+=line("Chiffre d'affaires",R.CA,fEUR,false,false,true);
+  h+=line("Croissance du CA",R.croiss,fPCT);
+  h+=line("Charges variables",R.chgv.map(x=>-x));
+  h+=line("Marge sur coûts variables",R.marge);
+  h+=line("Charges fixes",R.cf.map(x=>-x));
+  h+=line("Charges de personnel",R.perso.map(x=>-x));
+  h+=line("EBITDA",R.EBITDA,fEUR,true,false,true);
+  h+=line("Marge d'EBITDA",R.margeEBITDA,fPCT);
+  h+=line("Dotation amortissements",R.dot.map(x=>-x));
+  h+=line("EBIT",R.EBIT,fEUR,true,false,true);
+  h+=line("Charges financières",R.chgfin.map(x=>-x));
+  if(R.resExcept.some(x=>Math.abs(x)>0.5)) h+=line("Résultat de cession",R.resExcept,fEUR,true);
+  h+=line("Résultat avant impôt",R.RAI,fEUR,true);
+  h+=line("Impôt sur les sociétés",R.IS.map(x=>-x));
+  h+=line("RÉSULTAT NET",R.RN,fEUR,true,false,true);
+  h+=line("Trésorerie de clôture",R.tresoClot,fEUR,true,true,true);
+  h+=line("BFR (jours de CA)",R.bfrJours,fJ);
+  h+=line("Dette nette",R.detteNette);
+  h+=line("Dette nette / EBITDA",R.levier,fX,false);
+  h+=line("ROCE (après impôt)",R.ROCE,fPCT,false);
+  h+=line("Point mort (CA)",R.pointMort,fEUR,false,true);
+  h+=line("Marge de sécurité",R.margeSecu,fPCT);
+  h+=line("Contrôle Actif − Passif",R.ctrl,fEUR,false,true,true);
+  document.getElementById('tbl').innerHTML=h;
+}
+
+function mkChart(id,cfg){ if(charts[id])charts[id].destroy(); charts[id]=new Chart(document.getElementById(id),cfg); }
+// Palette validée (dataviz) : catégorielle bleu/aqua/jaune + statuts vert/rouge
+const C={blue:'#2a78d6',aqua:'#1baf7a',yellow:'#eda100',good:'#0ca30c',critical:'#d03b3b',warning:'#fab219',
+         blueLight:'#a9c7ef',aquaLight:'#8fd8bd',baseGray:'#cdccc4',
+         ink2:'#52514e',muted:'#898781',grid:'#e1e0d9'};
+const BAR={borderRadius:4,borderSkipped:false,maxBarThickness:30};
+const GRID={color:C.grid}, TICK={color:C.muted,font:{size:10}};
+const axes={x:{grid:{display:false},ticks:TICK},y:{grid:GRID,ticks:{...TICK,callback:v=>(v/1000)+'k'}}};
+const LEG=(show=true)=>({display:show,labels:{color:C.ink2,boxWidth:10,boxHeight:10,usePointStyle:true,font:{size:11}}});
+
+function renderCharts(R,R0,anyDec){
+  const baseLine = (data,label)=>({type:'line',label:label,data:data,borderColor:C.muted,
+    borderDash:[5,4],pointRadius:0,borderWidth:1.5,tension:.3,backgroundColor:'transparent'});
+
+  const actDs=[{label:'CA',data:R.CA,backgroundColor:C.blue,...BAR}];
+  if(anyDec) actDs.push({label:'CA (sans décision)',data:R0.CA,backgroundColor:C.blueLight,...BAR});
+  actDs.push({label:'EBITDA',data:R.EBITDA,backgroundColor:C.aqua,...BAR});
+  if(anyDec) actDs.push({label:'EBITDA (sans décision)',data:R0.EBITDA,backgroundColor:C.aquaLight,...BAR});
+  mkChart('cActivite',{type:'bar',data:{labels:ANNEES,datasets:actDs},
+    options:{responsive:true,plugins:{legend:LEG()},scales:axes}});
+
+  mkChart('cTreso',{type:'line',data:{labels:ANNEES,datasets:[
+      {label:'Trésorerie',data:R.tresoClot,borderColor:C.blue,borderWidth:2,
+       backgroundColor:'rgba(42,120,214,.10)',fill:true,tension:.3,
+       pointRadius:4,pointHoverRadius:6,
+       pointBackgroundColor:R.tresoClot.map(v=>v<0?C.critical:C.good),
+       pointBorderColor:R.tresoClot.map(v=>v<0?C.critical:C.good)}
+    ].concat(anyDec?[baseLine(R0.tresoClot,'Sans décision')]:[])},
+    options:{responsive:true,plugins:{legend:LEG(anyDec)},scales:axes}});
+
+  const rnDs=[{label:'Résultat net',data:R.RN,...BAR,backgroundColor:R.RN.map(v=>v<0?C.critical:C.good)}];
+  if(anyDec) rnDs.push({label:'RN (sans décision)',data:R0.RN,...BAR,backgroundColor:C.baseGray});
+  mkChart('cRN',{type:'bar',data:{labels:ANNEES,datasets:rnDs},
+    options:{responsive:true,plugins:{legend:LEG(anyDec)},scales:axes}});
+
+  mkChart('cLevier',{type:'line',data:{labels:ANNEES,datasets:[
+      {label:'Dette nette/EBITDA',data:R.levier,borderColor:C.yellow,backgroundColor:C.yellow,
+       borderWidth:2,pointRadius:0,pointHoverRadius:4,tension:.3},
+      {label:'Seuil 3×',data:ANNEES.map(()=>3),borderColor:C.critical,borderDash:[6,4],borderWidth:1.5,pointRadius:0}
+    ].concat(anyDec?[baseLine(R0.levier,'Sans décision')]:[])},
+    options:{responsive:true,plugins:{legend:LEG()},
+      scales:{x:{grid:{display:false},ticks:TICK},y:{grid:GRID,ticks:{...TICK,callback:v=>v+'×'}}}}});
+}
+
+// ============================================================
+//  SECTION FINANCEMENT — 3 graphes + tableau d'amortissement consolidé
+// ============================================================
+function finLabels(H){ return Array.from({length:H},(_,i)=> i<NY?ANNEES[i]:'N+'+i); }
+function renderFinance(R){   // partie DOM (sûre même onglet masqué) : sous-titre + tableau
+  const fin=R.fin, H=fin.horizon, labels=finLabels(H);
+  const noDette = fin.detteClot.every(v=>Math.abs(v)<1) && fin.interet.every(v=>Math.abs(v)<1);
+  document.getElementById('finSecSub').textContent =
+    noDette ? '· aucun emprunt' : `· ${fin.loans.length} emprunt${fin.loans.length>1?'s':''} sur ${H} ans`;
+  const row=(lab,arr,tot=false)=>`<tr class="${tot?'tot':''}"><td>${lab}</td>${arr.map(v=>`<td>${fEUR(v)}</td>`).join('')}</tr>`;
+  let h=`<tr><th>(en €)</th>${labels.map(a=>`<th>${a}</th>`).join('')}</tr>`;
+  h+=row('Intérêts',fin.interet);
+  h+=row('Remboursement du capital',fin.capital);
+  h+=row('Annuité totale',fin.interet.map((v,i)=>v+fin.capital[i]),true);
+  h+=row('Capital restant dû',fin.detteClot,true);
+  document.getElementById('finTbl').innerHTML=h;
+}
+function renderFinanceCharts(R){   // graphes (uniquement quand l'onglet Simulation est visible)
+  const fin=R.fin, H=fin.horizon, labels=finLabels(H);
+  const kEUR={...TICK,callback:v=>(v/1000)+'k'};
+  mkChart('cResteDu',{type:'line',data:{labels,datasets:[
+      {label:'Capital restant dû',data:fin.detteClot,borderColor:C.blue,backgroundColor:'rgba(42,120,214,.10)',
+       fill:true,borderWidth:2,pointRadius:2,pointHoverRadius:5,tension:.2}]},
+    options:{responsive:true,plugins:{legend:LEG(false)},scales:{x:{grid:{display:false},ticks:TICK},y:{grid:GRID,ticks:kEUR,beginAtZero:true}}}});
+
+  mkChart('cInterets',{type:'bar',data:{labels,datasets:[
+      {label:'Intérêts',data:fin.interet,backgroundColor:C.critical,...BAR}]},
+    options:{responsive:true,plugins:{legend:LEG(false)},scales:{x:{grid:{display:false},ticks:TICK},y:{grid:GRID,ticks:kEUR,beginAtZero:true}}}});
+
+  mkChart('cCapital',{type:'bar',data:{labels,datasets:[
+      {label:'Remboursement du capital',data:fin.capital,backgroundColor:C.aqua,...BAR}]},
+    options:{responsive:true,plugins:{legend:LEG(false)},scales:{x:{grid:{display:false},ticks:TICK},y:{grid:GRID,ticks:kEUR,beginAtZero:true}}}});
+}
+
+// ============================================================
+//  ANALYSE PAR RÉFÉRENCE — CA / mix / marge par produit
+// ============================================================
+const REF_PAL=['#2a78d6','#1baf7a','#eda100','#4a3aa7','#eb6834','#e34948','#0ca30c','#8a6d3b','#7a5cff','#d03b3b'];
+function renderRefsAnalysis(R){   // partie DOM (sûre même onglet masqué) : KPIs + tableau
+  const S=R.refSeries||[]; const last=NY-1;
+  const sub=document.getElementById('refAnSub'); if(sub) sub.textContent=`· ${S.length} référence${S.length>1?'s':''} · ${ANNEES[last]}`;
+  // KPIs : la référence n°1 en CA, sa marge, le poids du mix de tête, croissance CA de tête
+  const kp=document.getElementById('refKpis');
+  if(kp){
+    if(!S.length){ kp.innerHTML='<div class="kpi"><div class="k-lab">Références</div><div class="k-val">—</div><div class="k-sub">Ajoute une référence</div></div>'; }
+    else {
+      const caLast=S.map(s=>s.ca[last]); const totLast=caLast.reduce((a,b)=>a+b,0)||1;
+      const iTop=caLast.indexOf(Math.max(...caLast)); const top=S[iTop];
+      const txTop = top.ca[last]? top.marge[last]/top.ca[last]*100 : 0;
+      const best = S.reduce((a,s)=>{ const t=s.ca[last]?s.marge[last]/s.ca[last]*100:-1; return t>a.t?{nom:s.nom,t}:a; },{nom:'—',t:-1});
+      kp.innerHTML=[
+        {l:`Référence n°1 (${ANNEES[last]})`, v:esc(top.nom), s:`${fEUR(top.ca[last])} de CA`},
+        {l:'Poids dans le mix', v:(top.ca[last]/totLast*100).toFixed(0)+' %', s:`part de « ${esc(top.nom)} »`},
+        {l:'Taux de marge n°1', v:txTop.toFixed(0)+' %', s:'marge sur coûts variables'},
+        {l:'Meilleur taux de marge', v:best.t>=0?best.t.toFixed(0)+' %':'—', s:esc(best.nom)},
+      ].map(k=>`<div class="kpi"><div class="k-lab">${k.l}</div><div class="k-val">${k.v}</div><div class="k-sub">${k.s}</div></div>`).join('');
+    }
+  }
+  // tableau : CA par ref + total, marge par ref, taux de marge
+  const tbl=document.getElementById('refTbl'); if(tbl){
+    const head=`<tr><th>(en €)</th>${ANNEES.map(a=>`<th>${a}</th>`).join('')}</tr>`;
+    const line=(lab,arr,fmt=fEUR,tot=false)=>`<tr class="${tot?'tot':''}"><td>${lab}</td>${arr.map(v=>`<td>${fmt(v)}</td>`).join('')}</tr>`;
+    let h=head+`<tr class="sec"><td colspan="${NY+1}">Chiffre d'affaires par référence</td></tr>`;
+    S.forEach(s=>h+=line(esc(s.nom), s.ca));
+    h+=line("CA total", ANNEES.map((_,t)=>S.reduce((a,s)=>a+s.ca[t],0)), fEUR, true);
+    h+=`<tr class="sec"><td colspan="${NY+1}">Marge sur coûts variables par référence</td></tr>`;
+    S.forEach(s=>h+=line(esc(s.nom), s.marge));
+    h+=line("Marge totale", ANNEES.map((_,t)=>S.reduce((a,s)=>a+s.marge[t],0)), fEUR, true);
+    h+=`<tr class="sec"><td colspan="${NY+1}">Taux de marge par référence</td></tr>`;
+    S.forEach(s=>h+=line(esc(s.nom), s.ca.map((c,t)=>c?s.marge[t]/c:NaN), fPCT));
+    tbl.innerHTML=h;
+  }
+}
+function renderRefsCharts(R){
+  const S=R.refSeries||[]; const kEUR={...TICK,callback:v=>(v/1000)+'k'};
+  const color=i=>REF_PAL[i%REF_PAL.length];
+  // CA par référence (barres empilées)
+  mkChart('cRefCA',{type:'bar',data:{labels:ANNEES,datasets:S.map((s,i)=>({label:s.nom,data:s.ca,backgroundColor:color(i),stack:'ca',...BAR}))},
+    options:{responsive:true,plugins:{legend:LEG(S.length>1)},scales:{x:{stacked:true,grid:{display:false},ticks:TICK},y:{stacked:true,grid:GRID,ticks:kEUR,beginAtZero:true}}}});
+  // Mix : poids dans le CA en % (empilé à 100 %)
+  const tot=ANNEES.map((_,t)=>S.reduce((a,s)=>a+s.ca[t],0));
+  mkChart('cRefMix',{type:'bar',data:{labels:ANNEES,datasets:S.map((s,i)=>({label:s.nom,data:s.ca.map((c,t)=>tot[t]?c/tot[t]*100:0),backgroundColor:color(i),stack:'mix',...BAR}))},
+    options:{responsive:true,plugins:{legend:LEG(S.length>1)},scales:{x:{stacked:true,grid:{display:false},ticks:TICK},y:{stacked:true,grid:GRID,ticks:{...TICK,callback:v=>v+'%'},min:0,max:100}}}});
+  // Marge par référence (barres empilées)
+  mkChart('cRefMarge',{type:'bar',data:{labels:ANNEES,datasets:S.map((s,i)=>({label:s.nom,data:s.marge,backgroundColor:color(i),stack:'m',...BAR}))},
+    options:{responsive:true,plugins:{legend:LEG(S.length>1)},scales:{x:{stacked:true,grid:{display:false},ticks:TICK},y:{stacked:true,grid:GRID,ticks:kEUR,beginAtZero:true}}}});
+  // Taux de marge par référence (lignes)
+  mkChart('cRefTx',{type:'line',data:{labels:ANNEES,datasets:S.map((s,i)=>({label:s.nom,data:s.ca.map((c,t)=>c?s.marge[t]/c*100:null),borderColor:color(i),backgroundColor:color(i),borderWidth:2,pointRadius:2,tension:.3}))},
+    options:{responsive:true,plugins:{legend:LEG(S.length>1)},scales:{x:{grid:{display:false},ticks:TICK},y:{grid:GRID,ticks:{...TICK,callback:v=>v+'%'}}}}});
+}
+
+// ============================================================
+//  VALORISATION DCF — FCFF actualisés + valeur terminale
+// ============================================================
+function dcfEV(R,H,w,g){                              // EV via Gordon pour un couple (WACC,g) donné — sert aussi à la sensibilité
+  const N=NY, ovT=H.ov&&H.ov.tauxIS; let sumPV=0, fcffLast=0;
+  for(let t=0;t<N;t++){
+    const tax=ovT?ovT[t]:H.tauxIS;
+    const fcff=R.EBIT[t]*(1-tax)+R.dot[t]-R.capex[t]-R.varBFR[t];
+    sumPV += fcff/Math.pow(1+w,t+1);
+    if(t===N-1) fcffLast=fcff;
+  }
+  const TV = w>g ? fcffLast*(1+g)/(w-g) : NaN;
+  const pvTV = isFinite(TV) ? TV/Math.pow(1+w,N) : NaN;
+  return isFinite(pvTV) ? sumPV+pvTV : NaN;
+}
+function computeDCF(R,H){
+  const N=NY, w=H.wacc, g=H.dcfG, ovT=H.ov&&H.ov.tauxIS;
+  const NOPAT=[],addDA=[],capex=[],dBFR=[],FCFF=[],disc=[],PV=[];
+  for(let t=0;t<N;t++){
+    const tax=ovT?ovT[t]:H.tauxIS;
+    NOPAT[t]=R.EBIT[t]*(1-tax);
+    addDA[t]=R.dot[t]; capex[t]=R.capex[t]; dBFR[t]=R.varBFR[t];
+    FCFF[t]=NOPAT[t]+addDA[t]-capex[t]-dBFR[t];
+    disc[t]=1/Math.pow(1+w,t+1);
+    PV[t]=FCFF[t]*disc[t];
+  }
+  const sumPV=PV.reduce((a,b)=>a+b,0);
+  const TVg = w>g ? FCFF[N-1]*(1+g)/(w-g) : NaN;      // Gordon
+  const pvTVg = isFinite(TVg)? TVg*disc[N-1] : NaN;
+  const TVx = R.EBITDA[N-1]*H.dcfExit;                 // multiple de sortie (contre-vérif.)
+  const pvTVx = TVx*disc[N-1];
+  const EV = sumPV + (isFinite(pvTVg)?pvTVg:0);        // EV principal = Gordon
+  const EVx = sumPV + pvTVx;                            // EV alternatif = multiple
+  const netDebt = R.detteOuv[0] - R.openTreso;         // dette nette à la date de valorisation (ouverture, trésorerie calculée)
+  return {N,w,g,NOPAT,addDA,capex,dBFR,FCFF,disc,PV,sumPV,
+          TVg,pvTVg,TVx,pvTVx,EV,EVx,netDebt,equity:EV-netDebt,equityX:EVx-netDebt,
+          tvShare: EV? pvTVg/EV : NaN, impliedMult: R.EBITDA[N-1]? EV/R.EBITDA[N-1] : NaN};
+}
+function renderDCF(R,H){                              // partie DOM (KPIs + tableaux) — sûre même onglet masqué
+  const d=computeDCF(R,H);
+  const gapOK = d.w>d.g;
+  const kpi=(lab,val,sub,tip)=>`<div class="kpi"><div class="k-lab">${lab}${tip?tipHTML(tip):''}</div>
+    <div class="k-val">${val}</div>${sub?`<div class="k-sub">${sub}</div>`:''}</div>`;
+  document.getElementById('dcfKpis').innerHTML =
+    kpi("Valeur d'entreprise (EV)", gapOK?fEUR(d.EV):'n.s.', "Gordon · WACC "+fPCT(d.w)+" / g "+fPCT(d.g),
+        "Enterprise Value = flux actualisés + valeur terminale de Gordon. 'n.s.' si g ≥ WACC.")
+  + kpi("Valeur des capitaux propres", gapOK?fEUR(d.equity):'n.s.', "EV − dette nette ("+fEUR(d.netDebt)+")",
+        "Equity value = ce que valent les actions = EV moins la dette nette d'ouverture.")
+  + kpi("Poids de la valeur terminale", gapOK?fPCT(d.tvShare):'n.s.', "part de l'EV au-delà de l'horizon",
+        "Part de l'EV qui vient de la valeur terminale. Au-dessus de ~75 %, la valo repose surtout sur des hypothèses long terme (fragile).")
+  + kpi("EV/EBITDA implicite", gapOK?fX(d.impliedMult):'n.s.', "vs multiple de sortie "+fX(H.dcfExit),
+        "Multiple d'EBITDA (dernière année) auquel revient la valorisation Gordon. À comparer au multiple de sortie pour juger la cohérence.")
+  + kpi("EV (multiple de sortie)", fEUR(d.EVx), "contre-vérif. · "+fX(H.dcfExit)+" EV/EBITDA",
+        "Valeur d'entreprise si la valeur terminale = revente à ce multiple d'EBITDA. Sert de garde-fou à la méthode de Gordon.");
+
+  // tableau FCFF
+  const line=(lab,arr,tot=false)=>`<tr class="${tot?'tot':''}"><td>${lab}</td>${arr.map(v=>`<td>${fEUR(v)}</td>`).join('')}</tr>`;
+  let h=`<tr><th>(en €)</th>${ANNEES.map(a=>`<th>${a}</th>`).join('')}</tr>`;
+  h+=line("EBIT",R.EBIT);
+  h+=line("− Impôt normatif (NOPAT)",d.NOPAT,true);
+  h+=line("+ Dotations amortissements",d.addDA);
+  h+=line("− CAPEX",d.capex.map(x=>-x));
+  h+=line("− Variation du BFR",d.dBFR.map(x=>-x));
+  h+=line("= Flux disponible (FCFF)",d.FCFF,true);
+  h+=`<tr><td>Facteur d'actualisation</td>${d.disc.map(v=>`<td>${v.toFixed(3).replace('.',',')}</td>`).join('')}</tr>`;
+  h+=line("Flux actualisé (PV)",d.PV,true);
+  document.getElementById('dcfTbl').innerHTML=h;
+
+  // sensibilité EV : WACC (lignes) × g (colonnes)
+  const wBase=H.wacc, gBase=H.dcfG;
+  const wRow=[-0.02,-0.01,0,0.01,0.02].map(x=>wBase+x).filter(x=>x>0);
+  const gCol=[-0.01,-0.005,0,0.005,0.01].map(x=>gBase+x);
+  let s=`<thead><tr><th>EV — WACC ＼ g</th>${gCol.map(g=>`<th class="${Math.abs(g-gBase)<1e-9?'cmp-cur':''}">${fPCT(g)}</th>`).join('')}</tr></thead><tbody>`;
+  wRow.forEach(w=>{
+    s+=`<tr><td class="${Math.abs(w-wBase)<1e-9?'cmp-cur':''}">${fPCT(w)}</td>`+
+       gCol.map(g=>{ const ev=dcfEV(R,H,w,g); const cur=Math.abs(w-wBase)<1e-9&&Math.abs(g-gBase)<1e-9;
+         return `<td class="${cur?'best':''}">${isFinite(ev)?fEUR(ev):'n.s.'}</td>`; }).join('')+`</tr>`;
+  });
+  document.getElementById('dcfSens').innerHTML=s+`</tbody>`;
+}
+function renderDCFCharts(R,H){                        // graphes (uniquement quand l'onglet DCF est visible)
+  const d=computeDCF(R,H);
+  const kEUR={...TICK,callback:v=>(v/1000)+'k'};
+  // flux actualisés par année + PV de la valeur terminale
+  mkChart('cDcfPV',{type:'bar',data:{labels:[...ANNEES,'Val. term.'],datasets:[
+      {label:'Flux actualisé',data:[...d.PV, isFinite(d.pvTVg)?d.pvTVg:0],
+       backgroundColor:[...d.PV.map(()=>C.blue),C.aqua],...BAR}]},
+    options:{responsive:true,plugins:{legend:LEG(false)},scales:{x:{grid:{display:false},ticks:TICK},y:{grid:GRID,ticks:kEUR}}}});
+  // pont EV → equity (barres flottantes)
+  const ev=isFinite(d.EV)?d.EV:0;
+  mkChart('cDcfBridge',{type:'bar',data:{labels:["Valeur d'entreprise","− Dette nette","Capitaux propres"],datasets:[
+      {label:'base',data:[0, Math.min(ev,d.equity), 0],backgroundColor:'rgba(0,0,0,0)',...BAR,stack:'s'},
+      {label:'valeur',data:[ev, Math.abs(d.netDebt), d.equity],
+       backgroundColor:[C.blue,C.critical,C.good],...BAR,stack:'s'}]},
+    options:{responsive:true,plugins:{legend:LEG(false)},scales:{x:{grid:{display:false},ticks:TICK,stacked:true},y:{grid:GRID,ticks:kEUR,stacked:true}}}});
+}
+
+// ============================================================
+//  PERSISTANCE (localStorage) + en-tête d'impression
+// ============================================================
+const LS_KEY='pilotePME.v1';
+function currentState(){
+  const H={}; GROUPS.flatMap(g=>g.items).forEach(it=>{ const el=document.getElementById('num_'+it.key); if(el) H[it.key]=el.value; });
+  syncDecFromDOM();
+  const decInst=decInstances.map(o=>({id:o.id, type:o.type, nom:o.nom, active:o.active, vals:Object.assign({},o.vals)}));
+  return {company:document.getElementById('coName').textContent.trim(), H, loans:JSON.parse(JSON.stringify(financeLoans)), refs:JSON.parse(JSON.stringify(refs)), decInstances:decInst, ov:JSON.parse(JSON.stringify(overrides))};
+}
+function saveState(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(currentState())); }catch(e){/* ignore */} }
+function applyState(s){
+  if(!s) return;
+  if(s.company) document.getElementById('coName').textContent=s.company;
+  if(s.H) GROUPS.flatMap(g=>g.items).forEach(it=>{ if(s.H[it.key]!=null) setVal(it.key, s.H[it.key]); });
+  if(Array.isArray(s.loans)){ financeLoans=JSON.parse(JSON.stringify(s.loans)); renderLoanList(); }
+  refs = migrateRefsFromState(s); if(document.getElementById('refList')) renderRefList();
+  overrides = (s.ov && typeof s.ov==='object' && !Array.isArray(s.ov)) ? JSON.parse(JSON.stringify(s.ov)) : {};
+  decInstances = instancesFromState(s);   // format instances, sinon migration ancien format {dec:{...}}
+  buildDecisions();
+  finSummary();
+}
+function loadState(){ let s; try{ s=JSON.parse(localStorage.getItem(LS_KEY)); }catch(e){ return; } applyState(s); }
+function updatePrintHead(){
+  const sl=document.getElementById('slogan'); if(sl) sl.textContent=`Business plan ${NY} ans · décisions · valorisation`;
+  const el=document.getElementById('printHead'); if(!el) return;
+  const co=(document.getElementById('coName').textContent||'').trim()||'Entreprise';
+  const d=new Date().toLocaleDateString('fr-FR',{year:'numeric',month:'long',day:'numeric'});
+  el.innerHTML=`<div class="ph-co">${co}</div><div class="ph-sub">Business plan ${NY} ans · prévisions · édité le ${d}</div>`;
+}
+document.getElementById('coName').addEventListener('input',()=>{ saveState(); updatePrintHead(); });
+document.getElementById('coName').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); e.target.blur(); } });
+document.getElementById('btnExport').addEventListener('click',()=>window.print());
+
+// ---- Export CSV (ouvrable dans Excel) ----
+function csvNum(v,kind){
+  if(!isFinite(v)) return '';
+  if(kind==='pct') return (v*100).toFixed(1).replace('.',',');
+  if(kind==='x')   return v.toFixed(1).replace('.',',');
+  return String(Math.round(v));   // money / jours / entier
+}
+function exportCSV(){
+  if(!lastR) return;
+  const R=lastR, sep=';';
+  const company=(document.getElementById('coName').textContent||'Entreprise').trim();
+  const d=new Date().toLocaleDateString('fr-FR');
+  const rows=[[company],['Business plan '+NY+' ans — édité le '+d],[],['Indicateur','Unité',...ANNEES]];
+  const L=(lab,arr,kind,unit)=>rows.push([lab,unit,...arr.map(v=>csvNum(v,kind))]);
+  L("Chiffre d'affaires",R.CA,'money','€');
+  L("Croissance du CA",R.croiss,'pct','%');
+  L("Charges variables",R.chgv.map(x=>-x),'money','€');
+  L("Marge sur coûts variables",R.marge,'money','€');
+  L("Charges fixes",R.cf.map(x=>-x),'money','€');
+  L("Charges de personnel",R.perso.map(x=>-x),'money','€');
+  L("EBITDA",R.EBITDA,'money','€');
+  L("Marge d'EBITDA",R.margeEBITDA,'pct','%');
+  L("Dotation amortissements",R.dot.map(x=>-x),'money','€');
+  L("EBIT",R.EBIT,'money','€');
+  L("Charges financières",R.chgfin.map(x=>-x),'money','€');
+  if(R.resExcept.some(x=>Math.abs(x)>0.5)) L("Résultat de cession",R.resExcept,'money','€');
+  L("Résultat avant impôt",R.RAI,'money','€');
+  L("Impôt sur les sociétés",R.IS.map(x=>-x),'money','€');
+  L("Résultat net",R.RN,'money','€');
+  L("Trésorerie de clôture",R.tresoClot,'money','€');
+  L("BFR (jours de CA)",R.bfrJours,'j','jours');
+  L("Dette nette",R.detteNette,'money','€');
+  L("Dette nette / EBITDA",R.levier,'x','×');
+  L("ROCE (après impôt)",R.ROCE,'pct','%');
+  L("Point mort (CA)",R.pointMort,'money','€');
+  L("Marge de sécurité",R.margeSecu,'pct','%');
+  const csv=rows.map(r=>r.join(sep)).join('\r\n');
+  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=(company.replace(/[^\w\-]+/g,'_')||'pilote-pme')+'_business-plan.csv';
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
+document.getElementById('btnCsv').addEventListener('click',exportCSV);
+
+// ============================================================
+//  SCÉNARIOS NOMMÉS + COMPARAISON
+// ============================================================
+const SCN_KEY='pilotePME.scenarios';
+function esc(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function getScenarios(){ try{ return JSON.parse(localStorage.getItem(SCN_KEY))||{}; }catch(e){ return {}; } }
+function setScenarios(o){ try{ localStorage.setItem(SCN_KEY, JSON.stringify(o)); }catch(e){/* ignore */} }
+function renderScenarioList(){
+  const scn=getScenarios(); const names=Object.keys(scn);
+  const root=document.getElementById('scnList');
+  if(!names.length){ root.innerHTML='<div class="scn-empty">Aucun scénario enregistré. Définir des hypothèses et des décisions, puis « Enregistrer ».</div>'; return; }
+  root.innerHTML=names.map(n=>{
+    const d=encodeURIComponent(n);
+    return `<div class="scn">
+      <input type="checkbox" class="scn-cmp" data-name="${d}" title="Cocher pour comparer">
+      <span class="scn-name" data-name="${d}" title="Charger ce scénario">${esc(n)}</span>
+      <button class="scn-ic scn-dup" data-name="${d}" title="Dupliquer">⧉</button>
+      <button class="scn-ic scn-ren" data-name="${d}" title="Renommer">✎</button>
+      <button class="scn-ic scn-del" data-name="${d}" title="Supprimer">✕</button>
+    </div>`;
+  }).join('');
+  root.querySelectorAll('.scn-name').forEach(e=>e.addEventListener('click',()=>loadScenario(decodeURIComponent(e.dataset.name))));
+  root.querySelectorAll('.scn-dup').forEach(e=>e.addEventListener('click',()=>duplicateScenario(decodeURIComponent(e.dataset.name))));
+  root.querySelectorAll('.scn-ren').forEach(e=>e.addEventListener('click',()=>renameScenario(decodeURIComponent(e.dataset.name))));
+  root.querySelectorAll('.scn-del').forEach(e=>e.addEventListener('click',()=>deleteScenario(decodeURIComponent(e.dataset.name))));
+}
+function duplicateScenario(name){
+  const scn=getScenarios(); if(!scn[name]) return;
+  let nn=(prompt('Nom de la copie :', name+' (copie)')||'').trim(); if(!nn) return;
+  scn[nn]=JSON.parse(JSON.stringify(scn[name])); setScenarios(scn); renderScenarioList();
+}
+function renameScenario(name){
+  const scn=getScenarios(); if(!scn[name]) return;
+  let nn=(prompt('Nouveau nom :', name)||'').trim(); if(!nn || nn===name) return;
+  const out={}; Object.keys(scn).forEach(k=>{ out[k===name?nn:k]=scn[k]; }); // conserve l'ordre
+  setScenarios(out); renderScenarioList();
+}
+function saveScenario(){
+  const name=(prompt('Nom du scénario :','')||'').trim();
+  if(!name) return;
+  const scn=getScenarios(); scn[name]=currentState(); setScenarios(scn); renderScenarioList();
+}
+function loadScenario(name){ const scn=getScenarios(); if(scn[name]){ applyState(scn[name]); applyHorizon(); } }
+function deleteScenario(name){
+  if(!confirm('Supprimer le scénario « '+name+' » ? Cette action est définitive.')) return;
+  const scn=getScenarios(); delete scn[name]; setScenarios(scn); renderScenarioList();
+}
+
+// recompute pur (sans DOM) à partir d'un état stocké
+function computeFromState(s){
+  const H={};
+  GROUPS.flatMap(g=>g.items).forEach(it=>{ let v=parseFloat(s.H?s.H[it.key]:NaN); if(isNaN(v))v=0; H[it.key]= it.kind==='pct'?v/100:v; });
+  H.loans = Array.isArray(s.loans) ? s.loans : LOANS_DEF;
+  H.refs = engineRefs(migrateRefsFromState(s));   // références (nouveau format) ou migration mono-produit
+  H.ov={};
+  if(s.ov) PERYEAR_KEYS.forEach(k=>{ if(s.ov[k]&&s.ov[k].length){ const pct=ITEM[k].kind==='pct'; const a=s.ov[k].slice(0,NY).map(v=> pct? v/100 : v); while(a.length<NY) a.push(a[a.length-1]); H.ov[k]=a; } });
+  const decs=instancesFromState(s).map(toEngineDec);
+  return compute(H, decs);
+}
+const CMP_PAL=['#2a78d6','#1baf7a','#eda100','#4a3aa7','#eb6834','#e34948'];
+let cmpChart=null;
+function openComparison(){
+  const scn=getScenarios();
+  const checked=[...document.querySelectorAll('.scn-cmp:checked')].map(c=>decodeURIComponent(c.dataset.name));
+  const cols=[{name:'▶ En cours', state:currentState(), cur:true}]
+    .concat(checked.map(n=>({name:n, state:scn[n], cur:false})));
+  if(cols.length<2){ alert('Coche au moins un scénario enregistré pour le comparer au scénario en cours.'); return; }
+  const results=cols.map(c=>({...c, R:computeFromState(c.state)}));
+
+  const rows=KPI_DEFS.map(k=>{
+    const vals=results.map(r=>k.get(r.R));
+    const finite=vals.filter(v=>isFinite(v));
+    const best = finite.length ? (k.hiGood?Math.max(...finite):Math.min(...finite)) : null;
+    const tds=vals.map(v=>{
+      const isBest = best!==null && isFinite(v) && Math.abs(v-best)<1e-9;
+      return `<td class="${isBest?'best':''}">${k.fmt(v)}</td>`;
+    }).join('');
+    return `<tr><td>${k.lab}</td>${tds}</tr>`;
+  }).join('');
+  const headCols=results.map(r=>`<th class="${r.cur?'cmp-cur':''}">${esc(r.name)}</th>`).join('');
+  const table=`<table class="cmp-table"><thead><tr><th>Indicateur (${ANNEES[NY-1]})</th>${headCols}</tr></thead><tbody>${rows}</tbody></table>`;
+
+  const metrics=[{k:'tresoClot',l:'Trésorerie de clôture',u:'money'},{k:'CA',l:"Chiffre d'affaires",u:'money'},
+    {k:'EBITDA',l:'EBITDA',u:'money'},{k:'RN',l:'Résultat net',u:'money'},
+    {k:'levier',l:'Dette nette / EBITDA',u:'x'},{k:'ROCE',l:'ROCE (après impôt)',u:'pct'},
+    {k:'bfrJours',l:'BFR (jours de CA)',u:'j'}];
+
+  let modal=document.getElementById('cmpModal');
+  if(!modal){ modal=document.createElement('div'); modal.className='modal-overlay'; modal.id='cmpModal'; document.body.appendChild(modal); }
+  modal.innerHTML=`<div class="modal">
+    <div class="modal-head"><h2>Comparaison de scénarios</h2>
+      <button class="modal-close" id="cmpClose">✕</button></div>
+    <p class="modal-sub">Meilleure valeur de chaque ligne en vert. « ▶ En cours » = la configuration actuelle (non enregistrée).</p>
+    ${table}
+    <div style="display:flex;align-items:center;gap:10px;margin:0 0 10px;flex-wrap:wrap">
+      <h3 style="font-size:13px;color:var(--ink-2);margin:0">Évolution comparée —</h3>
+      <select id="cmpMetric">${metrics.map(m=>`<option value="${m.k}" data-u="${m.u}">${m.l}</option>`).join('')}</select>
+    </div>
+    <div style="height:270px"><canvas id="cmpTreso"></canvas></div>
+  </div>`;
+  modal.classList.add('open');
+  document.getElementById('cmpClose').addEventListener('click',()=>modal.classList.remove('open'));
+  modal.addEventListener('click',e=>{ if(e.target===modal) modal.classList.remove('open'); });
+
+  function drawCmp(mk,unit){
+    const cb = unit==='money'?(v=>(v/1000)+'k') : unit==='pct'?(v=>(v*100).toFixed(0)+'%')
+             : unit==='x'?(v=>v+'×') : (v=>v+' j');
+    if(cmpChart) cmpChart.destroy();
+    cmpChart=new Chart(document.getElementById('cmpTreso'),{type:'line',
+      data:{labels:ANNEES,datasets:results.map((r,i)=>({label:r.name,data:r.R[mk],
+        borderColor:CMP_PAL[i%CMP_PAL.length],backgroundColor:CMP_PAL[i%CMP_PAL.length],
+        borderWidth:2,pointRadius:3,tension:.3,borderDash:r.cur?[6,4]:[]}))},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:LEG(true)},
+        scales:{x:{grid:{display:false},ticks:TICK},y:{grid:GRID,ticks:{...TICK,callback:cb}}}}});
+  }
+  const sel=document.getElementById('cmpMetric');
+  sel.addEventListener('change',()=>{ const o=sel.options[sel.selectedIndex]; drawCmp(sel.value,o.dataset.u); });
+  drawCmp('tresoClot','money');
+}
+document.getElementById('btnSaveScn').addEventListener('click',saveScenario);
+document.getElementById('btnCompare').addEventListener('click',openComparison);
+
+// ---- Reset ----
+document.getElementById('reset').addEventListener('click',()=>{
+  GROUPS.flatMap(g=>g.items).forEach(it=>setVal(it.key,it.v));
+  overrides={};
+  financeLoans=JSON.parse(JSON.stringify(LOANS_DEF));
+  refs=JSON.parse(JSON.stringify(REFS_DEF)); renderRefList(); refSummary();
+  renderLoanList(); finSummary();
+  decInstances=defaultInstances(); buildDecisions();
+  applyHorizon();   // remet l'horizon à 5 ans et recalcule
+});
+
+// ---- Onglets ----
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
+document.querySelectorAll('.subtab').forEach(b=>b.addEventListener('click',()=>switchSub(b.dataset.sub)));
+
+// ---- Démarrage ----
+buildDecisions();
+buildInputs();
+buildFinanceModal();
+buildRefModal();
+buildYearModal();
+loadState();      // restaure les saisies précédentes si présentes
+renderScenarioList();
+applyHorizon();   // synchronise l'horizon (NY/ANNEES) avec le paramètre restauré, puis recalcule
+switchView('sim');   // applique le filtrage contextuel du panneau de gauche
+</script>
+
+</body></html>
