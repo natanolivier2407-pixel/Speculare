@@ -12,7 +12,7 @@
   body{margin:0;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--plane);color:var(--ink)}
   header{padding:14px 26px;background:var(--surface);border-bottom:1px solid var(--border);
     display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-  header h1{font-size:19px;margin:0;letter-spacing:-.2px;font-weight:700}
+  header h1{font-size:23px;margin:0;letter-spacing:-.3px;font-weight:700}
   header .slogan{color:var(--muted);font-size:13px}
   header .co-sep{color:var(--muted);font-weight:400}
   #coName{color:var(--blue);border-bottom:1px dashed var(--blue);cursor:text;outline:none;padding:0 2px}
@@ -23,10 +23,11 @@
   .btn-export:hover{background:#1c5cab}
   .btn-export.ghost{background:var(--surface);color:var(--blue);border:1px solid var(--blue)}
   .btn-export.ghost:hover{background:var(--blue-soft)}
-  .print-head{display:none}
+  .print-head,.print-foot{display:none}
   .wrap{display:grid;grid-template-columns:350px 1fr;gap:0;min-height:calc(100vh - 58px)}
   /* ---- Panneau gauche ---- */
   aside{background:var(--surface);border-right:1px solid var(--border);padding:16px;overflow-y:auto;max-height:calc(100vh - 58px)}
+  .sheet-handle{display:none}   /* poignée de la feuille du bas — visible seulement sur mobile */
   .aside-h{font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:4px 0 10px;font-weight:700}
   /* décisions */
   .dec{border:1px solid var(--border);border-radius:10px;margin-bottom:9px;overflow:hidden;background:var(--surface);transition:.15s}
@@ -109,9 +110,24 @@
     background:var(--surface-2);color:var(--muted);font-size:9px;font-style:normal;font-weight:700;
     margin-left:5px;border:1px solid var(--border);cursor:help;vertical-align:middle;flex:none}
   .tip:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
-  .fin-open{width:100%;padding:11px 12px;background:var(--surface);border:1px solid var(--border);
-    color:var(--ink);border-radius:9px;cursor:pointer;font-size:13px;font-weight:600;text-align:left}
-  .fin-open:hover{border-color:var(--blue);color:var(--blue)}
+  .fin-open{width:100%;padding:11px 12px;background:var(--blue-soft);border:1px solid var(--blue);
+    color:var(--blue);border-radius:9px;cursor:pointer;font-size:13px;font-weight:600;text-align:left;
+    display:flex;align-items:center;gap:8px}
+  .fin-open::before{content:"⚙";font-size:14px;opacity:.85}
+  .fin-open:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
+  /* mode d'équilibrage du bilan d'ouverture */
+  .open-mode{margin:2px 0 14px;padding:11px 12px;border:1px solid var(--border);border-radius:9px;background:var(--surface-2)}
+  .om-label{font-size:10.5px;font-weight:700;color:var(--ink-2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+  .om-fundbox{margin-top:11px;display:flex;flex-direction:column;gap:11px}
+  .om-field{display:flex;flex-direction:column;gap:5px}
+  .om-field label{font-size:12px;color:var(--ink-2)}
+  .om-field .om-hint{color:var(--muted);font-weight:400}
+  .om-field input[type=number].numfield{width:100%;border:1px solid var(--border);border-radius:7px;padding:6px 8px;
+    background:var(--surface);text-align:left}
+  .om-field input[type=range]{width:100%}
+  .om-readout{font-size:12px;color:var(--ink);background:var(--blue-soft);border:1px solid var(--blue);
+    border-radius:8px;padding:9px 11px;line-height:1.55}
+  .om-readout b{font-weight:700}
   .modal-overlay{position:fixed;inset:0;background:rgba(11,11,11,.45);display:none;align-items:center;
     justify-content:center;z-index:50;padding:20px}
   .modal-overlay.open{display:flex}
@@ -134,6 +150,15 @@
   .btn-primary{padding:10px 22px;background:var(--blue);color:#fff;border:none;border-radius:9px;
     cursor:pointer;font-size:13px;font-weight:600}
   .btn-primary:hover{background:#1c5cab}
+  /* modale « Exporter en PDF » */
+  .exp-field{display:block;margin-bottom:14px}
+  .exp-field>span{display:block;font-size:12.5px;font-weight:600;color:var(--ink-2);margin-bottom:5px}
+  .exp-field em{font-weight:400;color:var(--muted);font-style:normal}
+  .exp-input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:9px;font-size:14px;
+    color:var(--ink);background:var(--surface);font-family:inherit}
+  .exp-input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft)}
+  .exp-hint{font-size:11.5px;color:var(--muted);line-height:1.5;background:var(--surface-2);
+    padding:9px 12px;border-radius:8px;margin-top:2px}
   /* éditeur d'emprunts (modale) */
   .loan-card{border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px;background:var(--surface-2)}
   .loan-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
@@ -230,6 +255,7 @@
   .cmp-table thead th{color:var(--ink);font-weight:700;border-bottom:2px solid var(--border)}
   .cmp-table .best{color:var(--good-text);font-weight:700}
   .cmp-table th.cmp-cur{color:var(--blue)}
+  .cmp-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}   /* le tableau de comparaison scrolle sur petit écran */
   .modal select{padding:5px 9px;border:1px solid var(--border);border-radius:7px;background:var(--surface);
     color:var(--ink);font-size:12.5px;font-weight:600;cursor:pointer}
   /* ---- Résultats ---- */
@@ -283,20 +309,98 @@
   tr.sec td{background:var(--surface-2);font-weight:700;border-top:1px solid var(--border);color:var(--ink)}
   tr.tot td{font-weight:700;color:var(--ink)}
   .pos{color:var(--good-text)} .neg{color:var(--critical)}
-  @media(max-width:900px){.wrap{grid-template-columns:1fr}aside{max-height:none}.charts{grid-template-columns:1fr}}
-  /* ---- Impression / export PDF (présentation banque) ---- */
+  /* ================= MOBILE (≤768px) — Lot 1 : layout de base ================= */
+  @media(max-width:768px){
+    /* empilement + la page scrolle naturellement (pas de conteneurs à scroll imbriqués) */
+    .wrap{grid-template-columns:1fr;min-height:0}
+    aside,main{min-width:0}   /* évite le débordement horizontal dû à un enfant non compressible (tableau) */
+    main{max-height:none;overflow:visible;padding:14px 14px calc(78px + env(safe-area-inset-bottom))}   /* place pour la feuille en position peek */
+    /* Lot 4 — l'aside devient une FEUILLE DU BAS (bottom sheet) */
+    aside{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:40;
+      width:auto;height:60px;max-height:92vh;padding:0 14px calc(22px + env(safe-area-inset-bottom));
+      border-right:none;border-top:1px solid var(--border);border-radius:16px 16px 0 0;
+      box-shadow:0 -8px 30px rgba(11,11,11,.16);overflow:hidden;
+      transition:height .28s cubic-bezier(.4,0,.2,1)}
+    aside.sheet-half{height:56vh;overflow-y:auto}
+    aside.sheet-full{height:92vh;overflow-y:auto}
+    aside.dragging{transition:none}   /* pas de transition pendant le glisser (suit le doigt) */
+    body.sheet-open{overflow:hidden}   /* fige le fond quand la feuille est ouverte */
+    .sheet-handle{display:flex;flex-direction:column;align-items:center;gap:5px;
+      position:sticky;top:0;z-index:3;background:var(--surface);cursor:pointer;user-select:none;touch-action:none;
+      margin:0 -14px 8px;padding:9px 0 11px;border-radius:16px 16px 0 0;border-bottom:1px solid var(--border)}
+    .sheet-grip{width:40px;height:4px;border-radius:3px;background:var(--axis)}
+    .sheet-title{font-size:13px;font-weight:700;color:var(--ink)}
+    /* header compact */
+    header{padding:11px 14px;gap:10px}
+    header h1{font-size:19px}
+    .hdr-actions{gap:6px}
+    .btn-export{padding:8px 11px;font-size:12px}
+    .btn-word{display:none}   /* « Export CSV » → « ⤓ CSV » */
+    /* KPIs sur 2 colonnes */
+    .kpis{grid-template-columns:1fr 1fr;gap:10px}
+    .kpi{padding:11px 12px}
+    .kpi .k-val{font-size:19px}
+    /* graphes en 1 colonne + canvas borné à la carte (sinon la largeur inline 709px déborde) */
+    .charts,.fin-charts{grid-template-columns:1fr}
+    .card{overflow:hidden}
+    .card canvas{max-width:100%!important}
+    html,body{overflow-x:hidden}   /* filet de sécurité : aucun débordement horizontal de page */
+    /* onglets/sous-onglets : scroll horizontal, jamais de retour à la ligne */
+    .tabs,.subtabs{overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .tabs::-webkit-scrollbar,.subtabs::-webkit-scrollbar{display:none}
+    .tab,.subtab{white-space:nowrap;flex:none}
+    /* Lot 2 — tableaux au pouce : 1ère colonne (libellés) figée pendant le scroll horizontal */
+    .tblwrap td:first-child,.tblwrap th:first-child{
+      position:sticky;left:0;background:var(--surface);z-index:1;
+      box-shadow:1px 0 0 var(--border), 6px 0 8px -6px rgba(11,11,11,.16)}
+    #tbl tr.sec td:first-child{background:var(--surface-2)}   /* garde le fond des lignes de section */
+    /* Lot 3 — cibles tactiles (~40px mini) */
+    .st-btn{width:40px;height:40px;font-size:18px}
+    .stepper .numfield{min-height:40px;font-size:15px;width:66px}
+    .yr-btn{width:40px;height:40px;font-size:15px}
+    .ctrl input[type=range]{height:34px}
+    .loan-modebtn{padding:9px 14px}
+    .om-field input[type=number].numfield{min-height:42px}
+    .tab{padding:12px 16px}
+    .subtab{padding:10px 15px}
+    .dec-chk{width:20px;height:20px}
+    .scn input[type=checkbox]{width:18px;height:18px}
+    .scn-btn{padding:11px}
+    .dec-del,.scn .scn-ic{padding:6px 8px;font-size:15px}
+    /* Lot 5 — modales quasi plein écran, ancrées en bas (façon feuille) */
+    .modal-overlay{padding:0;align-items:flex-end}
+    .modal{max-width:100%;width:100%;max-height:94vh;border-radius:16px 16px 0 0;padding:16px 14px}
+    .modal-head{position:sticky;top:0;background:var(--surface);z-index:2;
+      margin:0 -14px 8px;padding:2px 14px 8px;border-bottom:1px solid var(--border)}
+    .modal-close{width:40px;height:40px;font-size:17px}
+    .cmp-scroll .cmp-table th:first-child,.cmp-scroll .cmp-table td:first-child{
+      position:sticky;left:0;background:var(--surface);z-index:1;
+      box-shadow:1px 0 0 var(--border), 6px 0 8px -6px rgba(11,11,11,.16)}
+  }
+  /* ---- Impression / export PDF (présentation investisseurs / banque) ---- */
   @media print{
-    @page{size:A4;margin:12mm}
+    @page{size:A4;margin:14mm 12mm 20mm}
     *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
     html,body{background:#fff;width:auto;overflow:visible}
-    aside,.reset,.simbar,header,.btn-export,.conseil{display:none!important}
+    aside,.reset,.simbar,header,.btn-export,.conseil,.tabs,.subtabs,.fin-intro,.dcf-sub{display:none!important}
     .wrap{grid-template-columns:1fr;min-height:0}
     main{max-height:none;overflow:visible;padding:0;width:auto;max-width:100%}
     .kpi,.card,.tblwrap,.finding{box-shadow:none;break-inside:avoid}
+    .kpi,.card,.tblwrap{border-color:#d9d9d3}
     .charts{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
     .charts canvas{width:100%!important;height:auto!important;max-width:100%}
     .tblwrap{overflow:visible}
-    .print-head{display:block;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid var(--ink)}
-    .print-head .ph-co{font-size:23px;font-weight:700}
-    .print-head .ph-sub{font-size:12px;color:var(--ink-2);margin-top:3px}
+    .fin-sec-h,.dcf-intro h2{break-after:avoid;font-size:15px;margin-bottom:12px}
+    /* En-tête de document */
+    .print-head{display:block;margin-bottom:18px;padding-bottom:12px;border-bottom:2.5px solid var(--ink)}
+    .print-head .ph-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .print-head .ph-issuer{font-size:13px;font-weight:700;letter-spacing:.3px;color:var(--ink)}
+    .print-head .ph-conf{font-size:9.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+      color:var(--critical);border:1px solid var(--critical);border-radius:4px;padding:2px 8px}
+    .print-head .ph-co{font-size:27px;font-weight:700;letter-spacing:-.4px;line-height:1.1;color:var(--ink)}
+    .print-head .ph-sub{font-size:11.5px;color:var(--ink-2);margin-top:5px}
+    /* Pied de page répété sur chaque feuille */
+    .print-foot{display:flex!important;position:fixed;bottom:0;left:0;right:0;
+      justify-content:space-between;align-items:center;
+      font-size:9px;color:var(--muted);border-top:1px solid var(--border);padding-top:4px}
   }

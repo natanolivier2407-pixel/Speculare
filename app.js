@@ -3,7 +3,7 @@
 //  kind: money | pct | days | num | years   (pct affiché en %, /100 dans le moteur)
 // ============================================================
 const GROUPS = [
-  {titre:"Paramètres clés", open:true, items:[
+  {titre:"Paramètres clés", open:false, items:[
     {key:"nbAnnees", lab:"Nombre d'années de prévision", v:5, min:3, max:10, step:1, kind:"years",
       tip:"Durée de l'horizon de prévision (de 3 à 10 ans). Toutes les tables, graphes et la valo DCF s'adaptent automatiquement."},
     {key:"capex", lab:"CAPEX courant / an",        v:150000, min:0, max:1000000, step:10000, kind:"money",
@@ -36,7 +36,7 @@ const GROUPS = [
     {key:"tauxDiv",  lab:"Taux de dividende",     v:30, min:0, max:100, step:5, kind:"pct"},
     {key:"rnN1",     lab:"Résultat net N-1",      v:180000, min:-200000, max:500000, step:10000, kind:"money"},
   ]},
-  {titre:"Valorisation DCF (avancé)", view:'dcf', open:true, items:[
+  {titre:"Valorisation DCF (avancé)", view:'dcf', open:false, items:[
     {key:"dcfG",   lab:"Croissance perpétuelle (g)", v:2, min:-2, max:6, step:0.25, kind:"pct",
       tip:"Taux de croissance à l'infini des flux après l'horizon (valeur terminale de Gordon). Doit rester < WACC et proche de la croissance long terme de l'économie."},
     {key:"dcfExit",lab:"Multiple de sortie (EV/EBITDA ×)", v:6, min:1, max:20, step:0.5, kind:"num",
@@ -60,6 +60,14 @@ let NY = ANNEES.length;
 const LOANS_DEF = [
   {nom:"Dette initiale", montant:500000, taux:4, duree:8, depart:'ouv'},
 ];
+
+// ---- Mode d'équilibrage du bilan d'ouverture ----
+// 'treso'   : la trésorerie d'ouverture est le plug (défaut historique — « voici ta trésorerie »).
+// 'funding' : on FIXE une trésorerie cible et on DÉDUIT le financement à lever (« voici ce que tu dois lever »),
+//             réparti entre un emprunt d'amorçage (qui s'amortit) et un apport en capital (fonds propres).
+let openMode='treso';
+const FUND_DEF={ targetCash:50000, partDette:70, tauxAmor:5.5, dureeAmor:7 };
+let fund={...FUND_DEF};
 
 // ============================================================
 //  RÉFÉRENCES PRODUITS — le CA et les charges variables sont la SOMME des références.
@@ -255,7 +263,7 @@ const DECISIONS = [
 function decType(type){ return DECISIONS.find(t=>t.key===type) || DECISIONS[0]; }
 function uid(){ return 'di'+Date.now().toString(36)+Math.floor(Math.random()*1e5).toString(36); }
 function defVals(t){ const o={}; t.params.forEach(p=>o[p.key]=p.v); return o; }
-function defaultInstances(){ return DECISIONS.map(t=>({id:uid(), type:t.key, nom:t.label, active:false, vals:defVals(t)})); }
+function defaultInstances(){ return []; }   // aucune décision préchargée : l'utilisateur les ajoute via la liste « Décisions à simuler »
 function escAttr(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 let decInstances = defaultInstances();
 // normalise une instance venue d'un état sauvegardé (complète les params manquants, vérifie le type)
@@ -438,6 +446,20 @@ function compute(H, decisions){
     d.apply(d.vals, drv, d.nom);
     if(d.applyLoan){ const l=d.applyLoan(d.vals, d.nom); if(l) loanDefs.push(l); }   // décision qui crée un emprunt (site)
   });
+  // ---- Bilan d'ouverture : mode d'équilibrage (plug = trésorerie OU financement déduit) ----
+  const BFRouv = H.openStocks + H.openCreances - H.openDettesF;
+  let cpOuv0Eff = H.cpOuv0, besoinFin=0, emprAmor=0, apportCap=0;
+  if(H.openMode==='funding' && H.fund){
+    const openingDebtBase = loanDefs.filter(l=>l.depart==='ouv').reduce((s,l)=>s+(+l.montant||0),0);
+    const target=+H.fund.targetCash||0;
+    // besoin = ce qu'il manque pour financer immos + BFR + trésorerie cible, au-delà des CP et de la dette déjà en place
+    besoinFin = Math.max(0, H.immoOuv0 + BFRouv + target - H.cpOuv0 - openingDebtBase);
+    const pd = Math.min(1, Math.max(0, (+H.fund.partDette||0)/100));
+    emprAmor = besoinFin*pd; apportCap = besoinFin*(1-pd);
+    // la part dette devient un vrai emprunt d'ouverture (s'amortit, génère des intérêts) ; la part capital gonfle les CP d'ouverture
+    if(emprAmor>0) loanDefs.push({nom:"Emprunt d'amorçage", montant:emprAmor, taux:(+H.fund.tauxAmor||0), duree:(+H.fund.dureeAmor||1), depart:'ouv'});
+    cpOuv0Eff = H.cpOuv0 + apportCap;
+  }
   const fin = buildLoans(loanDefs);
 
   // séries de taux : override par année si présent, sinon constante
@@ -454,10 +476,9 @@ function compute(H, decisions){
         fExpl=A(),fInv=A(),fFin=A(),varTreso=A(),tresoOuv=A(),tresoClot=A(),
         actif=A(),passif=A(),ctrl=A(),detteNette=A(),levier=A(),ROCE=A(),
         croiss=A(),margeEBITDA=A(),pointMort=A(),margeSecu=A();
-  const BFRouv = H.openStocks + H.openCreances - H.openDettesF;
-  // trésorerie d'ouverture = variable d'ajustement qui ÉQUILIBRE le bilan d'ouverture,
-  // quel que soit le portefeuille d'emprunts (detteOuv[0]) : Actif ouverture = Passif ouverture.
-  const openTreso = H.cpOuv0 + fin.detteOuv[0] - H.immoOuv0 - BFRouv;
+  // trésorerie d'ouverture = plug d'équilibre du bilan d'ouverture (Actif ouverture = Passif ouverture).
+  // En mode 'funding', cpOuv0Eff et le portefeuille ont été augmentés en amont → openTreso retombe exactement sur la cible.
+  const openTreso = cpOuv0Eff + fin.detteOuv[0] - H.immoOuv0 - BFRouv;
   let grossOuv=0;   // valeur brute cumulée des immos à l'ouverture (amortissement linéaire)
   let deficit=0;    // stock de déficit reportable (report des pertes sur l'IS futur)
 
@@ -499,7 +520,7 @@ function compute(H, decisions){
     // capitaux propres — dividende floored à 0 (pas de dividende sur perte)
     const prevRN = t===0 ? H.rnN1 : RN[t-1];
     div[t]   = Math.max(0, prevRN*sTauxDiv[t]);
-    cpOuv[t] = t===0 ? H.cpOuv0 : cpClot[t-1];
+    cpOuv[t] = t===0 ? cpOuv0Eff : cpClot[t-1];
     cpClot[t]= cpOuv[t] + RN[t] - div[t] + drv.equityInj[t];   // variation de capital (ouverture + / rachat −)
     // tableau de flux (méthode indirecte)
     fExpl[t] = RN[t] + dot[t] - varBFR[t] - drv.gainCession[t];   // la plus-value de cession n'est pas un flux d'exploitation
@@ -530,7 +551,8 @@ function compute(H, decisions){
     return {nom:rb.nom, ca:rca, vol:rvol, prix:rb.prix.slice(), cout:rb.cout.slice(), marge:rmarge};
   });
   Object.assign(R,{CA,chgv,marge,cf:drv.cf,perso:drv.perso,capex:drv.capex,EBITDA,dot,EBIT,chgfin,resExcept:drv.gainCession,RAI,IS,RN,div,BFR,varBFR,
-    tresoClot,detteOuv,detteClot,detteNette,levier,ROCE,bfrJours,croiss,margeEBITDA,pointMort,margeSecu,ctrl,fin,refSeries,openTreso});
+    tresoClot,detteOuv,detteClot,detteNette,levier,ROCE,bfrJours,croiss,margeEBITDA,pointMort,margeSecu,ctrl,fin,refSeries,openTreso,
+    funding:{mode:(H.openMode||'treso'), besoin:besoinFin, emprunt:emprAmor, apport:apportCap}});
   return R;
 }
 
@@ -585,6 +607,58 @@ function buildInputs(){
     });
   });
 }
+// ---- Mode d'équilibrage du bilan d'ouverture (injecté dans le groupe « Bilan d'ouverture ») ----
+function buildOpeningMode(){
+  const anchor=document.querySelector('#inputs .ctrl[data-key="tresoOuv0"]');
+  if(!anchor) return;
+  const box=document.createElement('div'); box.className='open-mode'; box.id='openModeCtrl';
+  box.innerHTML=`
+    <div class="om-label">Équilibrage du bilan d'ouverture</div>
+    <div class="ym-mode">
+      <button class="loan-modebtn" id="omTreso" type="button" title="La trésorerie d'ouverture est le résidu qui équilibre le bilan">Trésorerie déduite</button>
+      <button class="loan-modebtn" id="omFund" type="button" title="On fixe une trésorerie cible et on déduit le financement à lever">Financement déduit</button>
+    </div>
+    <div id="omFundBox" class="om-fundbox" hidden>
+      <div class="om-field"><label>Trésorerie d'ouverture cible</label>
+        <input type="number" id="fund_targetCash" class="numfield" step="5000" value="${fund.targetCash}"></div>
+      <div class="om-field"><label>Part financée par dette&nbsp;: <b id="fund_partLab">${fund.partDette}&nbsp;%</b> <span class="om-hint">(reste en apport de capital)</span></label>
+        <input type="range" id="fund_partDette" min="0" max="100" step="5" value="${fund.partDette}"></div>
+      <div class="om-field"><label>Taux de l'emprunt d'amorçage (%)</label>
+        <input type="number" id="fund_tauxAmor" class="numfield" step="0.25" value="${fund.tauxAmor}"></div>
+      <div class="om-field"><label>Durée de l'emprunt d'amorçage (ans)</label>
+        <input type="number" id="fund_dureeAmor" class="numfield" min="1" max="25" step="1" value="${fund.dureeAmor}"></div>
+      <div class="om-readout" id="fund_readout"></div>
+    </div>`;
+  anchor.parentNode.insertBefore(box, anchor);
+  document.getElementById('omTreso').addEventListener('click',()=>{ openMode='treso';   renderOpeningMode(); refresh(); });
+  document.getElementById('omFund') .addEventListener('click',()=>{ openMode='funding'; renderOpeningMode(); refresh(); });
+  const bind=(id,key,isRange)=>{ const el=document.getElementById(id);
+    el.addEventListener('input',()=>{ fund[key]=parseFloat(el.value)||0; if(isRange){ const pl=document.getElementById('fund_partLab'); if(pl) pl.textContent=fund.partDette+' %'; } refresh(); }); };
+  bind('fund_targetCash','targetCash'); bind('fund_partDette','partDette',true);
+  bind('fund_tauxAmor','tauxAmor');     bind('fund_dureeAmor','dureeAmor');
+  renderOpeningMode();
+}
+function renderOpeningMode(){
+  const f=(openMode==='funding');
+  const bt=document.getElementById('omTreso'), bf=document.getElementById('omFund');
+  if(bt) bt.classList.toggle('on',!f); if(bf) bf.classList.toggle('on',f);
+  const box=document.getElementById('omFundBox'); if(box) box.hidden=!f;
+  const trow=document.querySelector('#inputs .ctrl[data-key="tresoOuv0"]'); if(trow) trow.style.display=f?'none':'';   // la ligne « tréso calculée » est redondante en mode financement
+}
+function syncFundInputs(){
+  const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=v; };
+  set('fund_targetCash',fund.targetCash); set('fund_partDette',fund.partDette);
+  set('fund_tauxAmor',fund.tauxAmor); set('fund_dureeAmor',fund.dureeAmor);
+  const pl=document.getElementById('fund_partLab'); if(pl) pl.textContent=fund.partDette+' %';
+}
+function updateFundReadout(R){
+  const el=document.getElementById('fund_readout'); if(!el) return;
+  if(openMode!=='funding' || !R.funding){ el.innerHTML=''; return; }
+  const fd=R.funding;
+  el.innerHTML = fd.besoin>0
+    ? `Besoin de financement&nbsp;: <b>${fEUR(fd.besoin)}</b><br>→ emprunt d'amorçage <b>${fEUR(fd.emprunt)}</b> · apport en capital <b>${fEUR(fd.apport)}</b>`
+    : `Bilan d'ouverture déjà couvert — aucun financement à lever (trésorerie ≥ cible).`;
+}
 function stepVal(it,dir){
   const num=document.getElementById('num_'+it.key);
   let v=(parseFloat(num.value)||0)+dir*it.step;
@@ -628,6 +702,7 @@ function readH(){
   H.refs = engineRefs(refs);   // références produits (unités moteur)
   H.ov = {};   // overrides par année (unités moteur : pct /100)
   PERYEAR_KEYS.forEach(k=>{ if(overrides[k]){ const pct=ITEM[k].kind==='pct'; H.ov[k]=overrides[k].slice(0,NY).map(v=> pct? v/100 : v); } });
+  H.openMode=openMode; H.fund={...fund};
   return H;
 }
 function setVal(key,val){
@@ -950,6 +1025,7 @@ function refresh(){
       `<b>Simulation active</b> — ${noms}. Les KPI affichent l'écart <i>vs</i> la trajectoire de base.`;
   }
 
+  updateFundReadout(R);
   renderKPIs(R,R0,anyDec); renderConseiller(R,H);
   renderTable(R); renderFinance(R); renderRefsAnalysis(R); renderDCF(R,H);   // parties DOM (sûres même onglet masqué)
   renderActiveCharts();                                     // graphes du seul onglet visible
@@ -1395,16 +1471,19 @@ function renderDCFCharts(R,H){                        // graphes (uniquement qua
 //  PERSISTANCE (localStorage) + en-tête d'impression
 // ============================================================
 const LS_KEY='pilotePME.v1';
+let docCompany='', docSubtitle='';   // identité du document, demandée au moment de l'export PDF
 function currentState(){
   const H={}; GROUPS.flatMap(g=>g.items).forEach(it=>{ const el=document.getElementById('num_'+it.key); if(el) H[it.key]=el.value; });
   syncDecFromDOM();
   const decInst=decInstances.map(o=>({id:o.id, type:o.type, nom:o.nom, active:o.active, vals:Object.assign({},o.vals)}));
-  return {company:document.getElementById('coName').textContent.trim(), H, loans:JSON.parse(JSON.stringify(financeLoans)), refs:JSON.parse(JSON.stringify(refs)), decInstances:decInst, ov:JSON.parse(JSON.stringify(overrides))};
+  return {company:docCompany, subtitle:docSubtitle, openMode, fund:{...fund}, H, loans:JSON.parse(JSON.stringify(financeLoans)), refs:JSON.parse(JSON.stringify(refs)), decInstances:decInst, ov:JSON.parse(JSON.stringify(overrides))};
 }
 function saveState(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(currentState())); }catch(e){/* ignore */} }
 function applyState(s){
   if(!s) return;
-  if(s.company) document.getElementById('coName').textContent=s.company;
+  docCompany=(s.company||''); docSubtitle=(s.subtitle||'');
+  openMode=(s.openMode==='funding')?'funding':'treso';
+  fund=Object.assign({...FUND_DEF}, (s.fund&&typeof s.fund==='object')?s.fund:{});
   if(s.H) GROUPS.flatMap(g=>g.items).forEach(it=>{ if(s.H[it.key]!=null) setVal(it.key, s.H[it.key]); });
   if(Array.isArray(s.loans)){ financeLoans=JSON.parse(JSON.stringify(s.loans)); renderLoanList(); }
   refs = migrateRefsFromState(s); if(document.getElementById('refList')) renderRefList();
@@ -1412,18 +1491,57 @@ function applyState(s){
   decInstances = instancesFromState(s);   // format instances, sinon migration ancien format {dec:{...}}
   buildDecisions();
   finSummary();
+  syncFundInputs(); renderOpeningMode();
 }
 function loadState(){ let s; try{ s=JSON.parse(localStorage.getItem(LS_KEY)); }catch(e){ return; } applyState(s); }
+// nom d'entreprise pour l'en-tête PDF / CSV — saisi à l'export, repli sur « Entreprise »
+function companyName(){ return (docCompany||'').trim() || 'Entreprise'; }
 function updatePrintHead(){
-  const sl=document.getElementById('slogan'); if(sl) sl.textContent=`Business plan ${NY} ans · décisions · valorisation`;
   const el=document.getElementById('printHead'); if(!el) return;
-  const co=(document.getElementById('coName').textContent||'').trim()||'Entreprise';
+  const co=esc(companyName());
+  const sub=esc((docSubtitle||'').trim() || 'Business plan prévisionnel');
   const d=new Date().toLocaleDateString('fr-FR',{year:'numeric',month:'long',day:'numeric'});
-  el.innerHTML=`<div class="ph-co">${co}</div><div class="ph-sub">Business plan ${NY} ans · prévisions · édité le ${d}</div>`;
+  el.innerHTML=`<div class="ph-top"><span class="ph-issuer">Specularé</span><span class="ph-conf">Confidentiel</span></div>`+
+    `<div class="ph-co">${co}</div>`+
+    `<div class="ph-sub">${sub} · horizon ${NY} ans · édité le ${d}</div>`;
+  const foot=document.getElementById('printFoot');
+  if(foot) foot.innerHTML=`<span>${co}</span><span>Édité avec Specularé · Document confidentiel</span>`;
 }
-document.getElementById('coName').addEventListener('input',()=>{ saveState(); updatePrintHead(); });
-document.getElementById('coName').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); e.target.blur(); } });
-document.getElementById('btnExport').addEventListener('click',()=>window.print());
+// ---- Modale « Exporter en PDF » : on demande le nom de l'entreprise avant d'imprimer ----
+function openExportModal(){
+  let m=document.getElementById('exportModal');
+  if(!m){
+    m=document.createElement('div'); m.className='modal-overlay'; m.id='exportModal';
+    m.innerHTML=`<div class="modal" style="max-width:470px">
+      <div class="modal-head"><h2>Exporter en PDF</h2>
+        <button class="modal-close" id="expClose" title="Fermer">✕</button></div>
+      <p class="modal-sub">Ces informations apparaissent en tête du document (destiné à des investisseurs, banques…).</p>
+      <label class="exp-field"><span>Nom de l'entreprise</span>
+        <input type="text" id="expCompany" class="exp-input" placeholder="Ex. MécaFluid SAS" maxlength="60"></label>
+      <label class="exp-field"><span>Sous-titre <em>(optionnel)</em></span>
+        <input type="text" id="expSubtitle" class="exp-input" placeholder="Business plan prévisionnel" maxlength="80"></label>
+      <div class="exp-hint">Dans la fenêtre d'impression : destination <b>« Enregistrer au format PDF »</b> et décoche <b>En-têtes et pieds de page</b> du navigateur pour un rendu net.</div>
+      <div class="modal-foot"><button class="scn-btn" id="expCancel" style="flex:none;width:auto;padding:9px 16px">Annuler</button><button class="btn-primary" id="expGo">Exporter en PDF</button></div>
+    </div>`;
+    document.body.appendChild(m);
+    m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); });
+    document.getElementById('expClose').addEventListener('click',()=>m.classList.remove('open'));
+    document.getElementById('expCancel').addEventListener('click',()=>m.classList.remove('open'));
+    const go=()=>{
+      docCompany=document.getElementById('expCompany').value.trim();
+      docSubtitle=document.getElementById('expSubtitle').value.trim();
+      saveState(); updatePrintHead(); m.classList.remove('open');
+      setTimeout(()=>window.print(), 80);   // laisse la modale se fermer avant le dialogue d'impression
+    };
+    document.getElementById('expGo').addEventListener('click',go);
+    m.querySelectorAll('.exp-input').forEach(inp=>inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); go(); } }));
+  }
+  document.getElementById('expCompany').value=docCompany||'';
+  document.getElementById('expSubtitle').value=docSubtitle||'';
+  m.classList.add('open');
+  setTimeout(()=>{ const f=document.getElementById('expCompany'); if(f) f.focus(); }, 40);
+}
+document.getElementById('btnExport').addEventListener('click', openExportModal);
 
 // ---- Export CSV (ouvrable dans Excel) ----
 function csvNum(v,kind){
@@ -1435,7 +1553,7 @@ function csvNum(v,kind){
 function exportCSV(){
   if(!lastR) return;
   const R=lastR, sep=';';
-  const company=(document.getElementById('coName').textContent||'Entreprise').trim();
+  const company=companyName();
   const d=new Date().toLocaleDateString('fr-FR');
   const rows=[[company],['Business plan '+NY+' ans — édité le '+d],[],['Indicateur','Unité',...ANNEES]];
   const L=(lab,arr,kind,unit)=>rows.push([lab,unit,...arr.map(v=>csvNum(v,kind))]);
@@ -1534,9 +1652,8 @@ let cmpChart=null;
 function openComparison(){
   const scn=getScenarios();
   const checked=[...document.querySelectorAll('.scn-cmp:checked')].map(c=>decodeURIComponent(c.dataset.name));
-  const cols=[{name:'▶ En cours', state:currentState(), cur:true}]
-    .concat(checked.map(n=>({name:n, state:scn[n], cur:false})));
-  if(cols.length<2){ alert('Coche au moins un scénario enregistré pour le comparer au scénario en cours.'); return; }
+  const cols=checked.map(n=>({name:n, state:scn[n], cur:false}));
+  if(cols.length<2){ alert('Coche au moins deux scénarios enregistrés pour les comparer.'); return; }
   const results=cols.map(c=>({...c, R:computeFromState(c.state)}));
 
   const rows=KPI_DEFS.map(k=>{
@@ -1550,7 +1667,7 @@ function openComparison(){
     return `<tr><td>${k.lab}</td>${tds}</tr>`;
   }).join('');
   const headCols=results.map(r=>`<th class="${r.cur?'cmp-cur':''}">${esc(r.name)}</th>`).join('');
-  const table=`<table class="cmp-table"><thead><tr><th>Indicateur (${ANNEES[NY-1]})</th>${headCols}</tr></thead><tbody>${rows}</tbody></table>`;
+  const table=`<div class="cmp-scroll"><table class="cmp-table"><thead><tr><th>Indicateur (${ANNEES[NY-1]})</th>${headCols}</tr></thead><tbody>${rows}</tbody></table></div>`;
 
   const metrics=[{k:'tresoClot',l:'Trésorerie de clôture',u:'money'},{k:'CA',l:"Chiffre d'affaires",u:'money'},
     {k:'EBITDA',l:'EBITDA',u:'money'},{k:'RN',l:'Résultat net',u:'money'},
@@ -1562,7 +1679,7 @@ function openComparison(){
   modal.innerHTML=`<div class="modal">
     <div class="modal-head"><h2>Comparaison de scénarios</h2>
       <button class="modal-close" id="cmpClose">✕</button></div>
-    <p class="modal-sub">Meilleure valeur de chaque ligne en vert. « ▶ En cours » = la configuration actuelle (non enregistrée).</p>
+    <p class="modal-sub">Meilleure valeur de chaque ligne en vert.</p>
     ${table}
     <div style="display:flex;align-items:center;gap:10px;margin:0 0 10px;flex-wrap:wrap">
       <h3 style="font-size:13px;color:var(--ink-2);margin:0">Évolution comparée —</h3>
@@ -1600,6 +1717,7 @@ document.getElementById('reset').addEventListener('click',()=>{
   refs=JSON.parse(JSON.stringify(REFS_DEF)); renderRefList(); refSummary();
   renderLoanList(); finSummary();
   decInstances=defaultInstances(); buildDecisions();
+  openMode='treso'; fund={...FUND_DEF}; syncFundInputs(); renderOpeningMode();
   applyHorizon();   // remet l'horizon à 5 ans et recalcule
 });
 
@@ -1610,6 +1728,7 @@ document.querySelectorAll('.subtab').forEach(b=>b.addEventListener('click',()=>s
 // ---- Démarrage ----
 buildDecisions();
 buildInputs();
+buildOpeningMode();
 buildFinanceModal();
 buildRefModal();
 buildYearModal();
@@ -1617,3 +1736,64 @@ loadState();      // restaure les saisies précédentes si présentes
 renderScenarioList();
 applyHorizon();   // synchronise l'horizon (NY/ANNEES) avec le paramètre restauré, puis recalcule
 switchView('sim');   // applique le filtrage contextuel du panneau de gauche
+
+// ============================================================
+//  FEUILLE DU BAS (mobile) — l'aside coulisse en bottom sheet
+//  États : peek (poignée seule) → half (mi-hauteur) → full (plein) → peek
+//  Piloté par matchMedia : totalement inerte au-dessus de 768px.
+// ============================================================
+const mqMobile = matchMedia('(max-width:768px)');
+let sheetState='peek';
+const SHEET_PEEK=60;
+function sheetHeights(){ const vh=innerHeight; return {peek:SHEET_PEEK, half:Math.round(vh*0.56), full:Math.round(vh*0.92)}; }
+function setSheet(s){
+  sheetState=s;
+  const a=document.querySelector('aside');
+  if(a){
+    a.classList.remove('sheet-half','sheet-full');
+    if(s==='half') a.classList.add('sheet-half'); else if(s==='full') a.classList.add('sheet-full');
+    a.dataset.sheet=s; a.style.height='';   // rend la main à la hauteur pilotée par le CSS (transition)
+  }
+  document.body.classList.toggle('sheet-open', s!=='peek');
+}
+function cycleSheet(){ setSheet(sheetState==='peek'?'half':sheetState==='half'?'full':'peek'); }
+function nearestState(px){
+  const h=sheetHeights(); let best='peek', bd=Infinity;
+  for(const k of ['peek','half','full']){ const d=Math.abs(h[k]-px); if(d<bd){ bd=d; best=k; } }
+  return best;
+}
+function applySheetMode(){
+  const a=document.querySelector('aside'); if(!a) return;
+  if(mqMobile.matches){ if(!a.dataset.sheet) a.dataset.sheet='peek'; sheetState=a.dataset.sheet; }
+  else { a.removeAttribute('data-sheet'); a.classList.remove('sheet-half','sheet-full'); a.style.height=''; document.body.classList.remove('sheet-open'); sheetState='peek'; }
+}
+(function initSheet(){
+  const a=document.querySelector('aside');
+  const h=document.getElementById('sheetHandle');
+  mqMobile.addEventListener('change', applySheetMode);
+  applySheetMode();
+  if(!a || !h) return;
+  // glisser-au-doigt : on redimensionne la feuille pendant le drag, on snappe au relâchement ; un simple tap cycle.
+  let dragging=false, startY=0, startH=0, moved=false;
+  h.addEventListener('pointerdown',e=>{
+    if(!mqMobile.matches) return;
+    dragging=true; moved=false; startY=e.clientY; startH=a.getBoundingClientRect().height;
+    a.classList.add('dragging'); try{ h.setPointerCapture(e.pointerId); }catch(_){}
+  });
+  h.addEventListener('pointermove',e=>{
+    if(!dragging) return;
+    const dy=startY-e.clientY; if(Math.abs(dy)>5) moved=true;
+    const hs=sheetHeights();
+    const nh=Math.max(hs.peek, Math.min(hs.full, startH+dy));
+    a.style.height=nh+'px';
+    document.body.classList.toggle('sheet-open', nh>hs.peek+8);
+  });
+  const end=()=>{
+    if(!dragging) return; dragging=false; a.classList.remove('dragging');
+    if(!moved){ cycleSheet(); return; }                 // tap = cycle peek → half → full
+    setSheet(nearestState(a.getBoundingClientRect().height));   // drag = snap à l'accroche la plus proche
+  };
+  h.addEventListener('pointerup',end);
+  h.addEventListener('pointercancel',end);
+  h.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&mqMobile.matches){ e.preventDefault(); cycleSheet(); } });
+})();

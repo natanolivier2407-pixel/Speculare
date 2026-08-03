@@ -10,16 +10,18 @@
 </head>
 <body>
 <header>
-  <h1>Specularé <span class="co-sep">·</span> <span id="coName" contenteditable="true" spellcheck="false" title="Cliquer pour renommer l&#39;entreprise">Base</span></h1>
-  <span class="slogan" id="slogan">Business plan 5 ans · décisions · valorisation</span>
+  <h1>Specularé</h1>
   <div class="hdr-actions">
-    <button class="btn-export ghost" id="btnCsv">⤓ Export CSV</button>
-    <button class="btn-export" id="btnExport">⤓ Export PDF</button>
+    <button class="btn-export ghost" id="btnCsv">⤓ <span class="btn-word">Export </span>CSV</button>
+    <button class="btn-export" id="btnExport">⤓ <span class="btn-word">Export </span>PDF</button>
   </div>
 </header>
 
 <div class="wrap">
   <aside>
+    <div class="sheet-handle" id="sheetHandle" role="button" tabindex="0" aria-label="Ouvrir ou fermer les réglages">
+      <span class="sheet-grip"></span><span class="sheet-title">Réglages</span>
+    </div>
     <div class="aside-sec" data-view="sim">
     <div class="aside-h">Scénarios</div>
     <div id="scnList" class="scn-list"><div class="scn-empty">Aucun scénario enregistré. Définir des hypothèses et des décisions, puis « Enregistrer ».</div></div>
@@ -33,7 +35,7 @@
     <div id="decisions"></div><!-- cartes générées dynamiquement par buildDecisions() depuis decInstances -->
     </div><!-- /aside-sec Décisions -->
     <div class="aside-h" style="margin-top:18px">Hypothèses</div>
-    <div id="inputs"><details open=""><summary>Paramètres clés</summary><div class="grp"><div class="ctrl">
+    <div id="inputs"><details><summary>Paramètres clés</summary><div class="grp"><div class="ctrl">
         <label for="in_volN"><span>Volume vendu en N</span><b id="lab_volN">10 000</b></label>
         <div class="row">
           <input type="range" id="in_volN" min="0" max="50000" step="500" value="10000">
@@ -295,7 +297,7 @@
       <button class="tab" data-view="dcf">Valorisation DCF</button>
     </nav>
     <div class="view" id="view-sim">
-    <div class="print-head" id="printHead"><div class="ph-co">Base</div><div class="ph-sub">Business plan 5 ans · prévisions · édité le 15 juillet 2026</div></div>
+    <div class="print-head" id="printHead"><div class="ph-co">Entreprise</div><div class="ph-sub">Business plan 5 ans · prévisions · édité le 15 juillet 2026</div></div>
     <div class="simbar" id="simbar"><span class="dot"></span><span id="simtxt"></span></div>
     <nav class="subtabs">
       <button class="subtab on" data-sub="apercu">Vue d'ensemble</button>
@@ -369,6 +371,7 @@
     </div><!-- /view-dcf -->
   </main>
 </div>
+<div class="print-foot" id="printFoot"></div>
 
 <script src="app.js"></script>
 
