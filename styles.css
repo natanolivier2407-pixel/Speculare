@@ -350,10 +350,12 @@
     .tabs::-webkit-scrollbar,.subtabs::-webkit-scrollbar{display:none}
     .tab,.subtab{white-space:nowrap;flex:none}
     /* Lot 2 — tableaux au pouce : 1ère colonne (libellés) figée pendant le scroll horizontal */
+    .tblwrap{padding-left:0;padding-right:0}   /* colonne figée flush : pas de gouttière où le scroll transparaît */
     .tblwrap td:first-child,.tblwrap th:first-child{
-      position:sticky;left:0;background:var(--surface);z-index:1;
-      box-shadow:1px 0 0 var(--border), 6px 0 8px -6px rgba(11,11,11,.16)}
+      position:sticky;left:0;z-index:5;background:var(--surface);
+      box-shadow:1px 0 0 0 var(--border), 7px 0 8px -5px rgba(11,11,11,.22)}
     #tbl tr.sec td:first-child{background:var(--surface-2)}   /* garde le fond des lignes de section */
+    #tbl tr.tot td:first-child,#tbl tr th:first-child{background:var(--surface)}   /* opaque partout, y compris l'en-tête */
     /* Lot 3 — cibles tactiles (~40px mini) */
     .st-btn{width:40px;height:40px;font-size:18px}
     .stepper .numfield{min-height:40px;font-size:15px;width:66px}
