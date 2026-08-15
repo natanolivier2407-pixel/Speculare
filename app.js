@@ -11,9 +11,7 @@ const GROUPS = [
   ]},
   {titre:"Coûts & marge (avancé)", open:false, items:[
     {key:"cfN",   lab:"Charges fixes en N",         v:120000, min:0, max:1000000, step:10000, kind:"money"},
-    {key:"inflCF",lab:"Évolution des charges fixes",v:2,   min:-15, max:15, step:0.5, kind:"pct"},
     {key:"persoN",lab:"Charges de personnel en N",  v:60000, min:0, max:1000000, step:10000, kind:"money"},
-    {key:"gPerso",lab:"Évolution des charges de personnel", v:3, min:-20, max:15, step:0.5, kind:"pct"},
     {key:"tauxIS",lab:"Taux d'imposition (IS)",     v:25,  min:0, max:40, step:1, kind:"pct"},
   ]},
   {titre:"BFR — délais (avancé)", open:false, items:[
@@ -407,9 +405,9 @@ const numOf = k => { const el=document.getElementById('num_'+k); return el? (par
 // valeur de la trajectoire auto, en unité d'affichage (sert à pré-remplir / prolonger un override)
 function autoVal(key,t){
   switch(key){
-    case 'cfN':   return numOf('cfN')  *Math.pow(1+numOf('inflCF')/100, t);
-    case 'persoN':return numOf('persoN')*Math.pow(1+numOf('gPerso')/100,t);
-    default:      return numOf(key);   // capex, DSO, DPO, DIO, tauxIS : constante
+    // la trajectoire d'un paramètre se décrit désormais UNIQUEMENT dans la modale « par année »
+    // (valeur ou croissance) : plus de taux de croissance en doublon dans le panneau.
+    default:      return numOf(key);   // valeur en N, constante par défaut
   }
 }
 // ajuste les séries « par année » des références au nouvel horizon (prolonge en auto / tronque)
@@ -447,9 +445,10 @@ const ovRound = v => Math.round(v*100)/100;
 // ============================================================
 function ovNorm(o){
   if(!o) return null;
-  if(Array.isArray(o)) return {kind:'values', v:o.slice()};        // ancien format (tableau nu)
-  if(o.kind==='rates')  return {kind:'rates',  r:(o.r||[]).slice()};
-  if(o.kind==='values') return {kind:'values', v:(o.v||[]).slice()};
+  // ⚠️ conserver `mode` et `base` : ce sont eux qui portent l'état de la modale
+  if(Array.isArray(o)) return {kind:'values', mode:'year', v:o.slice()};   // ancien format (tableau nu)
+  if(o.kind==='rates')  return {kind:'rates',  mode:o.mode||'const', base:o.base, r:(o.r||[]).slice()};
+  if(o.kind==='values') return {kind:'values', mode:o.mode||'const', base:o.base, v:(o.v||[]).slice()};
   return null;
 }
 // développe un override en série de NY valeurs. `base` = valeur en N (point de départ du mode croissance).
@@ -489,14 +488,17 @@ function buildYearModal(){
       <button class="modal-close" id="ymClose" title="Fermer">✕</button></div>
     <p class="modal-sub" id="ymSub"></p>
     <div class="ym-mode">
-      <button class="loan-modebtn" id="ymAuto">Trajectoire auto</button>
-      <button class="loan-modebtn" id="ymValues">Valeurs</button>
+      <button class="loan-modebtn" id="ymValues">Valeur</button>
       <button class="loan-modebtn" id="ymRates">Croissance</button>
     </div>
-    <div id="ymBody" hidden>
-      <div class="ym-apply"><span id="ymApplyLab">Appliquer à toutes les années :</span>
+    <div class="ym-mode ym-mode2">
+      <button class="loan-modebtn" id="ymConst">Identique chaque année</button>
+      <button class="loan-modebtn" id="ymYear">Choisir par année</button>
+    </div>
+    <div id="ymBody">
+      <div class="ym-apply" id="ymConstRow"><span id="ymApplyLab">Valeur appliquée chaque année :</span>
         <input type="number" id="ymAll" class="numfield">
-        <button class="scn-btn" id="ymApplyAll" style="width:auto;padding:6px 12px">Appliquer</button></div>
+        <span class="ym-unit-inline" id="ymUnit"></span></div>
       <div id="ymYears" class="ym-years"></div>
       <p class="ym-hint" id="ymHint"></p>
     </div>
@@ -506,31 +508,49 @@ function buildYearModal(){
   document.getElementById('ymClose').addEventListener('click',()=>m.classList.remove('open'));
   document.getElementById('ymDone').addEventListener('click',()=>m.classList.remove('open'));
   m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); });
-  document.getElementById('ymAuto').addEventListener('click',()=>{ ymSet(null); renderYearModal(); refresh(); });
+  // --- mode : VALEUR ou CROISSANCE (on repart toujours de la trajectoire affichée) ---
   document.getElementById('ymValues').addEventListener('click',()=>{
-    if(ovKind(ymGet())!=='values'){
-      // on part de la trajectoire actuellement affichée : passer d'un mode à l'autre ne doit rien casser
-      ymSet({kind:'values', v:ymCurSerie().map(ovRound), base:ymBase()});
+    if(ymKindNow()!=='values'){
+      const o=ovNorm(ymGet());
+      ymSet({kind:'values', mode:(o&&o.mode)||'const', v:ymCurSerie().map(ovRound), base:ymBase()});
     }
     renderYearModal(); refresh();
   });
   document.getElementById('ymRates').addEventListener('click',()=>{
-    if(ovKind(ymGet())!=='rates'){
-      // taux implicites de la trajectoire courante : on repart de ce qui est déjà à l'écran
-      const cur=ymCurSerie(), r=new Array(NY).fill(0);
+    if(ymKindNow()!=='rates'){
+      const cur=ymCurSerie(), r=new Array(NY).fill(0), o=ovNorm(ymGet());
       for(let t=1;t<NY;t++) r[t]= cur[t-1]? ovRound((cur[t]/cur[t-1]-1)*100) : 0;
-      ymSet({kind:'rates', r, base:cur[0]});
+      ymSet({kind:'rates', mode:(o&&o.mode)||'const', r, base:cur[0]});
     }
     renderYearModal(); refresh();
   });
-  document.getElementById('ymApplyAll').addEventListener('click',()=>{
-    const v=parseFloat(document.getElementById('ymAll').value);
-    const o=ovNorm(ymGet());
-    if(isNaN(v)||!o) return;
-    if(o.kind==='rates'){ for(let t=1;t<NY;t++) o.r[t]=v; o.r[0]=0; }   // « +5 % par an » = un seul taux partout
+  // --- saisie : IDENTIQUE chaque année, ou une valeur PAR ANNÉE ---
+  document.getElementById('ymConst').addEventListener('click',()=>{ ymSetMode('const'); });
+  document.getElementById('ymYear').addEventListener('click',()=>{ ymSetMode('year'); });
+  document.getElementById('ymAll').addEventListener('input',e=>{
+    const v=parseFloat(e.target.value); if(isNaN(v)) return;
+    const o=ymEnsure();
+    if(o.kind==='rates'){ for(let t=1;t<NY;t++) o.r[t]=v; o.r[0]=0; }   // un seul taux, appliqué chaque année
     else o.v=o.v.map(()=>v);
-    o.base=ymBase(); ymSet(o); renderYearModal(); refresh();
+    o.mode='const'; ymSet(o); updateYmPreview(); refresh();
   });
+}
+// mode courant (par défaut : une VALEUR identique chaque année — il n'y a plus de « trajectoire auto »)
+function ymKindNow(){ return ovKind(ymGet()) || 'values'; }
+function ymModeNow(){ const o=ovNorm(ymGet()); return (o&&o.mode)||'const'; }
+// crée l'override à la volée s'il n'existe pas encore (la modale montre toujours un mode actif)
+function ymEnsure(){
+  let o=ovNorm(ymGet());
+  if(!o){ o={kind:'values', mode:'const', v:ymCurSerie().map(ovRound)}; }
+  o.base=ymBase(); return o;
+}
+function ymSetMode(m){
+  const o=ymEnsure(); o.mode=m;
+  if(m==='const'){   // on aplatit sur la 1re valeur saisie pour que « identique » le soit vraiment
+    if(o.kind==='rates'){ const x=o.r[1]||0; for(let t=1;t<NY;t++) o.r[t]=x; o.r[0]=0; }
+    else { const x=o.v[0]||0; o.v=o.v.map(()=>x); }
+  }
+  ymSet(o); renderYearModal(); refresh();
 }
 // formate une valeur d'override selon la nature du paramètre (pour l'aperçu du mode croissance)
 function fmtOv(v,it){
@@ -572,7 +592,7 @@ function openYM(ctx){
   const it=ctx.it;
   const unit=it.kind==='pct'?' en %':it.kind==='money'?' en €':it.kind==='days'?' en jours':'';
   document.getElementById('ymTitle').textContent=ctx.lab;
-  document.getElementById('ymSub').innerHTML=`Trois façons de piloter ce paramètre : la <b>trajectoire auto</b> (valeur en N + croissance), des <b>valeurs</b> saisies une par une${unit}, ou des <b>taux de croissance</b> année par année — utile quand la progression n'est pas linéaire (forte montée, puis palier).`;
+  document.getElementById('ymSub').innerHTML=`Décris ce paramètre en <b>valeur</b>${unit} ou en <b>croissance</b>, puis choisis une saisie <b>identique chaque année</b> ou <b>année par année</b> — utile quand la progression n'est pas linéaire (forte montée, puis palier).`;
   renderYearModal();
   document.getElementById('yearModal').classList.add('open');
 }
@@ -584,15 +604,27 @@ function updateYmPreview(){
   document.querySelectorAll('#ymYears .ym-prev').forEach(e=>{ e.textContent=fmtOv(serie[+e.dataset.t],it); });
 }
 function renderYearModal(){
-  const o=ovNorm(ymGet()), kind=o?o.kind:null, it=ymItem();
-  document.getElementById('ymAuto').classList.toggle('on',!kind);
-  document.getElementById('ymValues').classList.toggle('on',kind==='values');
-  document.getElementById('ymRates').classList.toggle('on',kind==='rates');
-  document.getElementById('ymBody').hidden=!kind;
-  if(!kind) return;
-  const rates=(kind==='rates'), arr=rates?o.r:o.v, serie=ovSeries(ymGet(), ymBase());
+  const kind=ymKindNow(), mode=ymModeNow(), it=ymItem(), rates=(kind==='rates');
+  document.getElementById('ymValues').classList.toggle('on',!rates);
+  document.getElementById('ymRates').classList.toggle('on',rates);
+  document.getElementById('ymConst').classList.toggle('on',mode==='const');
+  document.getElementById('ymYear').classList.toggle('on',mode==='year');
+  const o=ymEnsure(), arr=rates?o.r:o.v;
+  const serie=ovSeries(o, ymBase());
+  // ligne « identique chaque année » : un seul champ
+  const constRow=document.getElementById('ymConstRow');
+  constRow.hidden=(mode!=='const');
+  document.getElementById('ymYears').hidden=(mode==='const');
   document.getElementById('ymApplyLab').textContent = rates
-    ? 'Appliquer ce taux à toutes les années :' : 'Appliquer à toutes les années :';
+    ? 'Taux de croissance appliqué chaque année :' : 'Valeur appliquée chaque année :';
+  document.getElementById('ymUnit').textContent = rates ? '%'
+    : (it.kind==='money'?'€':it.kind==='days'?'jours':'');
+  if(mode==='const'){
+    const cur = rates ? (arr[1]||0) : (arr[0]||0);
+    const inp=document.getElementById('ymAll');
+    if(document.activeElement!==inp) inp.value=cur;      // ne pas écraser la frappe en cours
+    inp.step = rates?0.5:it.step;
+  }
   document.getElementById('ymHint').textContent = rates
     ? 'Chaque taux s’applique à l’année précédente. ' + ANNEES[0] + ' est la valeur de départ : rien ne la précède.'
     : '';
@@ -604,10 +636,10 @@ function renderYearModal(){
       ${rates?'<i class="ym-unit">%</i><em class="ym-prev" data-t="'+t+'">'+fmtOv(serie[t],it)+'</em>':''}</label>`;
   }).join('');
   document.querySelectorAll('#ymYears .ym-in').forEach(inp=>inp.addEventListener('input',()=>{
-    const cur=ovNorm(ymGet()); if(!cur) return;
+    const cur=ymEnsure();
     const t=+inp.dataset.t, v=parseFloat(inp.value);
     if(cur.kind==='rates') cur.r[t]=isNaN(v)?0:v; else cur.v[t]=isNaN(v)?0:v;
-    cur.base=ymBase(); ymSet(cur); updateYmPreview(); refresh();
+    cur.mode='year'; ymSet(cur); updateYmPreview(); refresh();
   }));
 }
 
@@ -637,8 +669,8 @@ function buildDrivers(H){
   const ca=A(), chgv=A();
   for(let t=0;t<N;t++) refB.forEach(rb=>{ ca[t]+=rb.vol[t]*rb.prix[t]; chgv[t]+=rb.vol[t]*rb.cout[t]; });
   for(let t=0;t<N;t++){
-    cf[t]    = ov.cfN   ? ov.cfN[t]   : H.cfN   * Math.pow(1+H.inflCF,t);
-    perso[t] = ov.persoN? ov.persoN[t]: H.persoN* Math.pow(1+H.gPerso,t);
+    cf[t]    = ov.cfN   ? ov.cfN[t]   : H.cfN;      // trajectoire décrite dans la modale « par année »
+    perso[t] = ov.persoN? ov.persoN[t]: H.persoN;
     capex[t] = ov.capex ? ov.capex[t] : H.capex;
   }
   return {ca,chgv,refB,volMult,cf,perso,capex,capexL,equityInj,gainCession,nbvCession,proceedsCession};
