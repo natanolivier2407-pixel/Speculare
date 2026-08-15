@@ -73,29 +73,28 @@ let fund={...FUND_DEF};
 //  chacun soit en trajectoire auto (valeur en N + croissance/an), soit saisi par année (…Ov).
 //  1 référence = comportement mono-produit historique. La ref par défaut reproduit la base (10 000 × 50 €, CV 45 %).
 // ============================================================
+// Chaque métrique = une valeur en N + une trajectoire optionnelle décrite dans la modale
+// « par année » (valeur ou croissance). Plus de taux de croissance en doublon dans la carte.
 const REFS_DEF = [
-  {id:'r1', nom:'Produit principal', volN:10000, gVol:8, prixN:50, gPrix:2, coutN:22.5, gCout:2, volOv:null, prixOv:null, coutOv:null},
+  {id:'r1', nom:'Produit principal', volN:10000, prixN:50, coutN:22.5, volOv:null, prixOv:null, coutOv:null},
 ];
-let refs = JSON.parse(JSON.stringify(REFS_DEF));   // source de vérité (unités d'affichage : croissances en %)
+let refs = JSON.parse(JSON.stringify(REFS_DEF));   // source de vérité (unités d'affichage)
 const REF_METRICS = [
-  {m:'vol',  lab:'Volume',                base:'volN',  g:'gVol',  ov:'volOv',  unit:'',  step:500, gstep:0.5},
-  {m:'prix', lab:'Prix unitaire',         base:'prixN', g:'gPrix', ov:'prixOv', unit:'€', step:5,   gstep:0.5},
-  {m:'cout', lab:'Coût variable unitaire',base:'coutN', g:'gCout', ov:'coutOv', unit:'€', step:1,   gstep:0.5},
+  {m:'vol',  lab:'Volume',                base:'volN',  ov:'volOv',  unit:'',  step:500},
+  {m:'prix', lab:'Prix unitaire',         base:'prixN', ov:'prixOv', unit:'€', step:5},
+  {m:'cout', lab:'Coût variable unitaire',base:'coutN', ov:'coutOv', unit:'€', step:1},
 ];
 const metricOv = m => ({vol:'volOv', prix:'prixOv', cout:'coutOv'}[m]);
-const refN = (r,base,ov) => Array.isArray(r[ov]) ? (+r[ov][0]||0) : (+r[base]||0);   // valeur effective en N
-// convertit les références (affichage) en unités moteur (croissances /100, overrides ajustés à NY)
+// valeur effective en N : la base pilote toujours, y compris quand une croissance s'y applique
+const refN = (r,base,ov) => { const s=ovSeries(r[ov], +r[base]||0); return s? (+s[0]||0) : (+r[base]||0); };
+// convertit les références (affichage) en unités moteur : chaque override est développé en série
 function engineRefs(dr){
-  const mk=(ov,base,g)=>{ if(!Array.isArray(ov)) return null; const a=ov.slice(0,NY).map(Number);
-    for(let t=a.length;t<NY;t++) a.push((+base||0)*Math.pow(1+(+g||0),t)); return a; };
   return (dr||[]).map(r=>({
     nom:r.nom,
-    volN:+r.volN||0,  gVol:(+r.gVol||0)/100,
-    prixN:+r.prixN||0, gPrix:(+r.gPrix||0)/100,
-    coutN:+r.coutN||0, gCout:(+r.gCout||0)/100,
-    volOv: mk(r.volOv,  r.volN,  (+r.gVol||0)/100),
-    prixOv:mk(r.prixOv, r.prixN, (+r.gPrix||0)/100),
-    coutOv:mk(r.coutOv, r.coutN, (+r.gCout||0)/100),
+    volN:+r.volN||0, prixN:+r.prixN||0, coutN:+r.coutN||0,
+    volOv: ovSeries(r.volOv,  +r.volN||0),
+    prixOv:ovSeries(r.prixOv, +r.prixN||0),
+    coutOv:ovSeries(r.coutOv, +r.coutN||0),
   }));
 }
 // migration : un état sauvegardé peut avoir .refs (nouveau) ou seulement l'ancien mono-produit (H.volN/prixN/tauxCV)
@@ -172,14 +171,9 @@ const DECISIONS = [
      {key:"annee",    lab:"Année d'embauche",            kind:"year",  v:1},
      {key:"effectif", lab:"Nombre de personnes",         kind:"unit",  v:1, min:0, max:500, step:1, per:true},
      {key:"cout",     lab:"Coût chargé / an / personne", kind:"money", v:55000, min:0, max:200000, step:5000, per:true},
-     {key:"gCout",    lab:"Progression du coût",         kind:"pct",   v:2, min:-15, max:20, step:0.5},
    ],
    apply:(vv,drv)=>{
-     for(let t=vv.annee;t<NY;t++){
-       // si le coût est piloté par une série, elle porte déjà la progression : gCout ne s'applique plus
-       const prog = dvHas(vv,'cout') ? 1 : Math.pow(1+vv.gCout, t-vv.annee);
-       drv.perso[t] += dv(vv,'effectif',t) * dv(vv,'cout',t) * prog;
-     }
+     for(let t=vv.annee;t<NY;t++) drv.perso[t] += dv(vv,'effectif',t) * dv(vv,'cout',t);
    }},
 
   {key:"gamme", icon:"", label:"Élargir la gamme",
@@ -187,11 +181,8 @@ const DECISIONS = [
    params:[
      {key:"annee",  lab:"Année de lancement",   kind:"year",  v:2},
      {key:"volN",   lab:"Volume (année 1)",      kind:"unit",  v:1500, min:0, max:1000000, step:100, per:true},
-     {key:"gVol",   lab:"Croissance du volume",  kind:"pct",   v:8, min:-20, max:50, step:1},
      {key:"prixN",  lab:"Prix unitaire",         kind:"money", v:85, min:0, max:100000, step:5, per:true},
-     {key:"gPrix",  lab:"Croissance du prix",    kind:"pct",   v:2, min:-20, max:50, step:0.5},
      {key:"coutN",  lab:"Coût unitaire",         kind:"money", v:45, min:0, max:100000, step:5, per:true},
-     {key:"gCout",  lab:"Croissance du coût",    kind:"pct",   v:2, min:-20, max:50, step:0.5},
      {key:"capex",  lab:"Invest. de lancement",  kind:"money", v:80000, min:0, max:1000000, step:10000},
      {key:"cf",     lab:"Charges fixes / an",    kind:"money", v:0, min:0, max:1000000, step:5000, per:true},
      {key:"cannib", lab:"Cannibalisation",       kind:"pct",   v:0, min:0, max:100, step:5, per:true},
@@ -201,11 +192,10 @@ const DECISIONS = [
    apply:(vv,drv,nom)=>{
      const N=NY, vol=new Array(N).fill(0), prix=new Array(N).fill(0), cout=new Array(N).fill(0);
      for(let t=vv.annee;t<N;t++){
-       const k=t-vv.annee;
-       // une série « par année » décrit la trajectoire complète : la croissance associée est ignorée
-       vol[t] = dvHas(vv,'volN') ? dv(vv,'volN',t) : vv.volN *Math.pow(1+vv.gVol, k);
-       prix[t]= dvHas(vv,'prixN')? dv(vv,'prixN',t): vv.prixN*Math.pow(1+vv.gPrix,k);
-       cout[t]= dvHas(vv,'coutN')? dv(vv,'coutN',t): vv.coutN*Math.pow(1+vv.gCout,k);
+       // trajectoire décrite dans la modale « par année » (valeur ou croissance), sinon constante
+       vol[t] = dv(vv,'volN',t);
+       prix[t]= dv(vv,'prixN',t);
+       cout[t]= dv(vv,'coutN',t);
        // CANNIBALISATION — appliquée AVANT d'ajouter la gamme, sinon elle se cannibaliserait
        // elle-même. Le CA repris est un % des ventes de la NOUVELLE gamme (pas un rabot
        // forfaitaire), retiré aux références déjà en place au prorata de leur poids.
@@ -322,7 +312,11 @@ let decInstances = defaultInstances();
 function normalizeInstance(o){
   const t=decType(o&&o.type), vals=defVals(t);
   if(o&&o.vals) t.params.forEach(p=>{ if(o.vals[p.key]!=null) vals[p.key]=cloneVal(o.vals[p.key]); });
-  return {id:(o&&o.id)||uid(), type:t.key, nom:(o&&o.nom)||t.label, active:!!(o&&o.active), vals};
+  // `ov` (trajectoires « par année ») est stocké À PART de `vals` : la valeur en N reste ainsi
+  // toujours pilotable par son champ, y compris quand une croissance s'applique dessus.
+  const ov={};
+  if(o&&o.ov&&typeof o.ov==='object') t.params.forEach(p=>{ if(o.ov[p.key]) ov[p.key]=cloneVal(o.ov[p.key]); });
+  return {id:(o&&o.id)||uid(), type:t.key, nom:(o&&o.nom)||t.label, active:!!(o&&o.active), vals, ov};
 }
 // reconstruit la liste d'instances depuis un état : format instances, sinon migration ancien format {dec:{key:{...}}}
 function instancesFromState(s){
@@ -346,18 +340,14 @@ function toEngineDec(ins){
       const o={}; Object.keys(src).forEach(k=>{ const n=parseFloat(src[k]); if(!isNaN(n)) o[k]=n; });
       vals[p.key]=o; return;
     }
-    // paramètre piloté « par année » : on développe la série et on garde la valeur en N comme scalaire
-    // (les apply() lisent la série via dv(vv,key,t) quand elle existe)
-    const rawv=ins.vals[p.key];
-    if(rawv && typeof rawv==='object' && (rawv.kind==='values'||rawv.kind==='rates')){
-      const s=ovSeries(rawv, +rawv.base||0);
-      if(s){
-        const div = p.kind==='pct' ? 100 : 1;
-        vals.__s=vals.__s||{}; vals.__s[p.key]=s.map(x=>x/div);
-        vals[p.key]=s[0]/div; return;
-      }
-    }
-    let v=parseFloat(ins.vals[p.key]); if(isNaN(v))v=0; vals[p.key]= p.kind==='pct'? v/100 : v; });
+    let v=parseFloat(ins.vals[p.key]); if(isNaN(v))v=0;
+    const div = p.kind==='pct' ? 100 : 1;
+    vals[p.key]= v/div;
+    // trajectoire « par année » : développée à partir de la valeur en N saisie dans le champ,
+    // qui reste donc pleinement modifiable même en mode croissance.
+    const o = ins.ov && ins.ov[p.key];
+    if(o){ const s=ovSeries(o, v); if(s){ vals.__s=vals.__s||{}; vals.__s[p.key]=s.map(x=>x/div); } }
+  });
   return {id:ins.id, type:ins.type, nom:(ins.nom||t.label), active:!!ins.active, vals, apply:t.apply, applyLoan:t.applyLoan};
 }
 // synchronise le DOM (source de vérité pendant l'édition) vers decInstances, avant toute reconstruction/sauvegarde
@@ -372,14 +362,12 @@ function syncDecFromDOM(){
         document.querySelectorAll('.dp-refin[data-dk="'+ins.id+'"]').forEach(inp=>{ o[inp.dataset.ref]=parseFloat(inp.value)||0; });
         ins.vals[p.key]=o; return;
       }
-      // paramètre « par année » : piloté par la modale, aucun champ unique à relire — ne pas l'écraser
-      if(ins.vals[p.key] && typeof ins.vals[p.key]==='object') return;
       const el=document.getElementById('dp_'+ins.id+'_'+p.key); if(el) ins.vals[p.key]=el.value;
     });
   });
 }
 function nextName(t){ const n=decInstances.filter(i=>i.type===t.key).length; return n? t.label+' '+(n+1) : t.label; }
-function addDecision(type){ syncDecFromDOM(); const t=decType(type); decInstances.push({id:uid(), type:t.key, nom:nextName(t), active:true, vals:defVals(t)}); buildDecisions(); refresh(); }
+function addDecision(type){ syncDecFromDOM(); const t=decType(type); decInstances.push({id:uid(), type:t.key, nom:nextName(t), active:true, vals:defVals(t), ov:{}}); buildDecisions(); refresh(); }
 function delDecision(id){ syncDecFromDOM(); decInstances=decInstances.filter(i=>i.id!==id); buildDecisions(); refresh(); }
 
 // ---- Formatage français ----
@@ -413,10 +401,17 @@ function autoVal(key,t){
 // ajuste les séries « par année » des références au nouvel horizon (prolonge en auto / tronque)
 function reconcileRefs(){
   refs.forEach(r=>REF_METRICS.forEach(c=>{
-    if(!Array.isArray(r[c.ov])) return;
-    const a=r[c.ov].slice(0,NY);
-    for(let t=a.length;t<NY;t++) a.push(ovRound((+r[c.base]||0)*Math.pow(1+(+r[c.g]||0)/100,t)));
-    r[c.ov]=a;
+    const o=ovNorm(r[c.ov]); if(!o) return;
+    if(o.kind==='values'){
+      const a=o.v.slice(0,NY);
+      for(let t=a.length;t<NY;t++) a.push(a.length?a[a.length-1]:(+r[c.base]||0));
+      o.v=a;
+    }else{
+      const a=o.r.slice(0,NY);
+      for(let t=a.length;t<NY;t++) a.push(a.length?a[a.length-1]:0);
+      o.r=a;
+    }
+    r[c.ov]=o;
   }));
 }
 // ajuste toutes les séries d'override à la longueur NY (au changement d'horizon) : prolonge en auto, tronque si besoin
@@ -578,13 +573,28 @@ function openDecYearModal(insId,pk){
   const p=decType(ins.type).params.find(x=>x.key===pk); if(!p) return;
   syncDecFromDOM();
   ymKey=insId+'.'+pk;
-  const scal=()=>{ const v=ins.vals[pk]; return (v&&typeof v==='object')? (+v.base||0) : (parseFloat(v)||0); };
+  const scal=()=>parseFloat(ins.vals[pk])||0;   // la valeur en N vient du champ, jamais figée dans l'override
   openYM({
     lab:p.lab+' — '+(ins.nom||''), it:{kind:p.kind, step:p.step},
-    get:()=>{ const v=ins.vals[pk]; return (v&&typeof v==='object')? v : null; },
-    set:o=>{ ins.vals[pk] = o ? o : scal(); buildDecisions(); },
+    get:()=>(ins.ov&&ins.ov[pk])||null,
+    set:o=>{ ins.ov=ins.ov||{}; if(o) ins.ov[pk]=o; else delete ins.ov[pk]; buildDecisions(); },
     base:scal,
     auto:()=>scal()
+  });
+}
+// métrique d'une référence produit (volume / prix / coût) : même modale, source = refs[idx][ov]
+function openRefYearModal(idx,m){
+  const r=refs[idx]; if(!r) return;
+  const cfg=REF_METRICS.find(c=>c.m===m); if(!cfg) return;
+  const ov=metricOv(m);
+  ymKey='ref'+idx+'.'+m;
+  openYM({
+    lab:cfg.lab+' — '+(r.nom||'Référence'),
+    it:{kind: cfg.unit==='€'?'money':'num', step:cfg.step},
+    get:()=>r[ov],
+    set:o=>{ r[ov]= o||null; renderRefList(); refSummary(); },
+    base:()=>+r[cfg.base]||0,
+    auto:()=>+r[cfg.base]||0
   });
 }
 function openYM(ctx){
@@ -659,9 +669,9 @@ function buildDrivers(H){
   const refB=rs.map(r=>{
     const vol=A(),prix=A(),cout=A();
     for(let t=0;t<N;t++){
-      vol[t] = r.volOv  ? r.volOv[t]  : r.volN *Math.pow(1+r.gVol, t);
-      prix[t]= r.prixOv ? r.prixOv[t] : r.prixN*Math.pow(1+r.gPrix,t);
-      cout[t]= r.coutOv ? r.coutOv[t] : r.coutN*Math.pow(1+r.gCout,t);
+      vol[t] = r.volOv  ? r.volOv[t]  : r.volN;    // trajectoire décrite dans la modale, sinon constante
+      prix[t]= r.prixOv ? r.prixOv[t] : r.prixN;
+      cout[t]= r.coutOv ? r.coutOv[t] : r.coutN;
     }
     return {nom:r.nom, vol, prix, cout};
   });
@@ -844,7 +854,7 @@ function buildInputs(){
             <input type="number" id="num_${it.key}" class="numfield" min="${it.min}" max="${it.max}" step="${it.step}" value="${it.v}">
             <button type="button" class="st-btn" data-k="${it.key}" data-d="1">+</button>
           </div>
-          ${per?`<button type="button" class="yr-btn" data-k="${it.key}" title="Gérer année par année">an</button>`:''}
+          ${per?`<button type="button" class="yr-btn" data-k="${it.key}" title="Décrire l'évolution : valeur ou croissance, identique chaque année ou année par année">Évolution</button>`:''}
         </div>`;
       wrap.appendChild(row);
       d.appendChild(wrap);
@@ -1002,15 +1012,14 @@ function decParamHTML(dk,p,val){
     return `<div class="dp"><label>${p.lab}</label><select id="${id}">${opts}</select></div>`;
   }
   const suf=p.kind==='pct'?' %':'';
-  const yr = p.per?`<button type="button" class="yr-btn dp-yr" data-dk="${dk}" data-pk="${p.key}" title="Gérer année par année">an</button>`:'';
-  // paramètre passé « par année » : la modale le pilote, on n'affiche plus de champ unique
-  if(val && typeof val==='object' && (val.kind==='values'||val.kind==='rates')){
-    const lib = val.kind==='rates' ? 'croissance par année' : 'valeurs par année';
-    return `<div class="dp dp-per"><label>${p.lab}${suf?' ('+suf.trim()+')':''}</label>
-       <span class="dp-pertag">${lib}</span>${yr}</div>`;
-  }
-  return `<div class="dp"><label>${p.lab}${suf?' ('+suf.trim()+')':''}</label>
-     <div class="stepper">
+  const ins=decInstances.find(i=>i.id===dk);
+  const ok=(ins&&ins.ov)?ovKind(ins.ov[p.key]):null;
+  const yr = p.per?`<button type="button" class="yr-btn dp-yr ${ok?'on':''}" data-dk="${dk}" data-pk="${p.key}" title="Décrire l'évolution : valeur ou croissance, identique chaque année ou année par année">Évolution</button>`:'';
+  // Le champ reste TOUJOURS affiché : en mode croissance c'est la valeur en N sur laquelle
+  // s'appliquent les taux. Il n'est neutralisé qu'en mode « valeurs », où il perd son sens.
+  const tag = ok ? `<span class="dp-pertag">${ok==='rates'?'croissance':'par année'}</span>` : '';
+  return `<div class="dp ${ok==='values'?'dp-locked':''}"><label>${p.lab}${suf?' ('+suf.trim()+')':''}</label>
+     ${tag}<div class="stepper">
        <button type="button" class="st-btn dp-btn" data-dk="${dk}" data-pk="${p.key}" data-d="-1">−</button>
        <input type="number" id="${id}" class="numfield" value="${v}" min="${p.min}" max="${p.max}" step="${p.step}">
        <button type="button" class="st-btn dp-btn" data-dk="${dk}" data-pk="${p.key}" data-d="1">+</button>
@@ -1184,18 +1193,16 @@ function refStepper(idx,field,val,step){
   </div>`;
 }
 function refMetricHTML(r,idx,cfg){
-  const on=Array.isArray(r[cfg.ov]);
+  const kind=ovKind(r[cfg.ov]);
   const suf=cfg.unit?` (${cfg.unit})`:'';
-  const years = on ? `<div class="ref-years">${ANNEES.map((a,t)=>`
-      <label class="ym-year"><span>${a}</span>
-        <input type="number" class="numfield ref-yr-in" data-idx="${idx}" data-metric="${cfg.m}" data-t="${t}" step="${cfg.step}" value="${r[cfg.ov][t]}"></label>`).join('')}</div>` : '';
-  const auto = on ? '' : `<div class="ref-auto">
-      <label>En N${suf} ${refStepper(idx,cfg.base,r[cfg.base],cfg.step)}</label>
-      <label>Croissance /an (%) ${refStepper(idx,cfg.g,r[cfg.g],cfg.gstep)}</label></div>`;
-  return `<div class="ref-metric">
+  const tag = kind ? `<span class="dp-pertag">${kind==='rates'?'croissance':'par année'}</span>` : '';
+  // la valeur en N reste éditable : c'est la base sur laquelle s'appliquent d'éventuels taux.
+  // Seul le mode « valeurs par année » la neutralise, puisqu'elle y perd son sens.
+  return `<div class="ref-metric ${kind==='values'?'dp-locked':''}">
     <div class="ref-metric-head"><span class="ref-metric-lab">${cfg.lab}</span>
-      <button type="button" class="ref-yr ${on?'on':''}" data-idx="${idx}" data-metric="${cfg.m}" title="Basculer entre trajectoire auto et saisie par année">${on?'par année':'auto'}</button></div>
-    ${auto}${years}</div>`;
+      ${tag}<button type="button" class="yr-btn ref-yr ${kind?'on':''}" data-idx="${idx}" data-metric="${cfg.m}"
+        title="Décrire l'évolution : valeur ou croissance, identique chaque année ou année par année">Évolution</button></div>
+    <div class="ref-auto"><label>En N${suf} ${refStepper(idx,cfg.base,r[cfg.base],cfg.step)}</label></div></div>`;
 }
 function refCardHTML(r,idx){
   return `<div class="ref-card" data-idx="${idx}">
@@ -1270,7 +1277,7 @@ function buildRefModal(){
   modal.innerHTML=`<div class="modal" style="max-width:760px">
     <div class="modal-head"><h2>Références produits</h2>
       <button class="modal-close" id="refClose" title="Fermer">✕</button></div>
-    <p class="modal-sub">Chaque référence a son <b>volume</b>, son <b>prix unitaire</b> et son <b>coût variable unitaire</b> (marge = prix − coût). Le CA et les charges variables du business plan sont la <b>somme</b> des références. Passe une donnée en <b>« par année »</b> pour saisir une valeur différente chaque année ; sinon elle suit sa trajectoire auto (valeur en N + croissance).</p>
+    <p class="modal-sub">Chaque référence a son <b>volume</b>, son <b>prix unitaire</b> et son <b>coût variable unitaire</b> (marge = prix − coût). Le CA et les charges variables du business plan sont la <b>somme</b> des références. La <b>valeur en N</b> est la base ; le bouton <b>« an »</b> décrit son évolution — en valeur ou en croissance, identique chaque année ou année par année.</p>
     <div id="refList"></div>
     <button class="scn-btn" id="refAdd" style="margin-top:8px;width:auto;padding:9px 16px">＋ Ajouter une référence</button>
     <div class="modal-foot"><span id="refModalSum"></span><button class="btn-primary" id="refDone">Terminé</button></div>
@@ -1297,16 +1304,13 @@ function buildRefModal(){
       const num=root.querySelector(`.ref-num[data-idx="${idx}"][data-field="${f}"]`); if(num) num.value=v;
       updateRefFoot(idx); refSummary(); refresh();
     } else if(b.classList.contains('ref-yr')){
-      const idx=+b.dataset.idx, m=b.dataset.metric, r=refs[idx], ov=metricOv(m), cfg=REF_METRICS.find(c=>c.m===m);
-      if(Array.isArray(r[ov])) r[ov]=null;   // repasse en auto
-      else r[ov]=Array.from({length:NY},(_,t)=>ovRound((+r[cfg.base]||0)*Math.pow(1+(+r[cfg.g]||0)/100,t)));
-      renderRefList(); refSummary(); refresh();
+      openRefYearModal(+b.dataset.idx, b.dataset.metric);
     } else if(b.classList.contains('ref-del')){
       refs.splice(+b.dataset.idx,1); renderRefList(); refSummary(); refresh();
     }
   });
   document.getElementById('refAdd').addEventListener('click',()=>{
-    refs.push({id:'r'+Date.now(), nom:'Nouvelle référence', volN:2000, gVol:5, prixN:60, gPrix:2, coutN:30, gCout:2, volOv:null, prixOv:null, coutOv:null});
+    refs.push({id:'r'+Date.now(), nom:'Nouvelle référence', volN:2000, prixN:60, coutN:30, volOv:null, prixOv:null, coutOv:null});
     renderRefList(); refSummary(); refresh();
   });
   // re-rendu à l'ouverture : les références issues des décisions doivent refléter
@@ -1341,11 +1345,13 @@ function refresh(){
   GROUPS.flatMap(g=>g.items).forEach(it=>{
     const lab=document.getElementById('lab_'+it.key);
     if(it.derived){ if(lab && it.key==='tresoOuv0') lab.textContent=fEUR(R.openTreso); return; }
-    const ovOn = PERYEAR_KEYS.indexOf(it.key)>=0 && !!overrides[it.key];
+    // En mode CROISSANCE, le champ reste la VALEUR EN N sur laquelle s'appliquent les taux :
+    // il doit rester pilotable. On ne neutralise le champ qu'en mode « valeurs », où il n'a plus de sens.
+    const ovK = PERYEAR_KEYS.indexOf(it.key)>=0 ? ovKind(overrides[it.key]) : null;
     const row=document.querySelector('.ctrl[data-key="'+it.key+'"]');
-    if(row) row.classList.toggle('ov-on', ovOn);
-    const yb=row&&row.querySelector('.yr-btn'); if(yb) yb.classList.toggle('on', ovOn);
-    if(ovOn){ lab.textContent='par année'; return; }
+    if(row){ row.classList.toggle('ov-on', ovK==='values'); row.classList.toggle('ov-rate', ovK==='rates'); }
+    const yb=row&&row.querySelector('.yr-btn'); if(yb) yb.classList.toggle('on', !!ovK);
+    if(ovK==='values'){ lab.textContent='par année'; return; }
     const v=document.getElementById('num_'+it.key).value;   // aligné sur la source de vérité
     const suf=it.kind==='pct'?' %':it.kind==='days'?' j':it.kind==='years'?' ans':'';
     const disp = (it.kind==='money')? fEUR(parseFloat(v)) : (parseFloat(v).toLocaleString('fr-FR')+suf);
@@ -1823,7 +1829,8 @@ let docCompany='', docSubtitle='';   // identité du document, demandée au mome
 function currentState(){
   const H={}; GROUPS.flatMap(g=>g.items).forEach(it=>{ const el=document.getElementById('num_'+it.key); if(el) H[it.key]=el.value; });
   syncDecFromDOM();
-  const decInst=decInstances.map(o=>({id:o.id, type:o.type, nom:o.nom, active:o.active, vals:Object.assign({},o.vals)}));
+  const decInst=decInstances.map(o=>({id:o.id, type:o.type, nom:o.nom, active:o.active,
+                                      vals:Object.assign({},o.vals), ov:JSON.parse(JSON.stringify(o.ov||{}))}));
   return {company:docCompany, subtitle:docSubtitle, openMode, fund:{...fund}, H, loans:JSON.parse(JSON.stringify(financeLoans)), refs:JSON.parse(JSON.stringify(refs)), decInstances:decInst, ov:JSON.parse(JSON.stringify(overrides))};
 }
 function saveState(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(currentState())); }catch(e){/* ignore */} }

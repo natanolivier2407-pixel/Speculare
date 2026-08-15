@@ -58,8 +58,10 @@
   .dp-ref i{font-style:normal;color:var(--muted);font-size:11px;width:12px}
   .dp-none{font-size:11.5px;color:var(--muted);font-style:italic}
   /* paramètre de décision piloté « par année » : le champ unique cède la place à une étiquette */
-  .dp-pertag{font-size:11px;font-weight:700;color:var(--blue);background:var(--blue-soft);
-             padding:4px 9px;border-radius:20px;white-space:nowrap}
+  .dp-pertag{font-size:10.5px;font-weight:700;color:var(--blue);background:var(--blue-soft);
+             padding:3px 8px;border-radius:20px;white-space:nowrap}
+  /* seul le mode « valeurs par année » neutralise le champ : en croissance il reste la base */
+  .dp-locked .stepper{opacity:.35;pointer-events:none}
   .dp .yr-btn{flex:none}
   .dp select{width:96px;padding:4px 6px;background:var(--surface);border:1px solid var(--border);
     color:var(--ink);border-radius:6px;font-size:12px;text-align:right}
@@ -83,10 +85,12 @@
   .ctrl{margin-bottom:11px}
   .ctrl label{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);margin-bottom:3px}
   .ctrl label b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
-  .ctrl .row{display:flex;align-items:center;gap:8px}
-  .ctrl input[type=range]{flex:1;accent-color:var(--blue)}
+  .ctrl .row{display:flex;align-items:center;gap:8px;min-width:0}
+  /* le curseur absorbe la place restante ; sans min-width:0 il refuse de rétrécir et
+     comprime le stepper, dont l'overflow:hidden coupe alors le bouton + */
+  .ctrl input[type=range]{flex:1 1 0;min-width:0;accent-color:var(--blue)}
   /* steppers − / + (sélection de nombres facile) */
-  .stepper{display:flex;align-items:center;border:1px solid var(--border);border-radius:7px;overflow:hidden;background:var(--surface)}
+  .stepper{display:flex;align-items:center;flex:none;border:1px solid var(--border);border-radius:7px;overflow:hidden;background:var(--surface)}
   .st-btn{width:26px;height:26px;border:none;background:var(--surface-2);color:var(--ink-2);font-size:16px;
     line-height:1;cursor:pointer;font-weight:700;flex:none}
   .st-btn:hover{background:var(--blue-soft);color:var(--blue)}
@@ -98,12 +102,14 @@
   .stepper.big .st-btn{width:40px;height:40px;font-size:20px}
   .stepper.big .numfield{width:100%;font-size:15px}
   /* bouton « par année » + état overridé */
-  .yr-btn{width:30px;height:30px;flex:none;border:1px solid var(--border);background:var(--surface);border-radius:7px;
-    cursor:pointer;font-size:13px;line-height:1;padding:0}
+  .yr-btn{height:30px;flex:none;border:1px solid var(--border);background:var(--surface);border-radius:7px;
+    cursor:pointer;font-size:11px;font-weight:600;line-height:1;padding:0 9px;color:var(--ink-2);white-space:nowrap}
   .yr-btn:hover{border-color:var(--blue)}
   .yr-btn.on{background:var(--blue-soft);border-color:var(--blue)}
   .ctrl.ov-on input[type=range],.ctrl.ov-on .stepper{opacity:.35;pointer-events:none}
   .ctrl.ov-on label b{color:var(--blue)}
+  /* mode croissance : la valeur en N reste la base des taux, donc pleinement modifiable */
+  .ctrl.ov-rate label b{color:var(--blue)}
   /* modale par année */
   .ym-mode{display:flex;gap:8px;margin-bottom:14px}
   .ym-apply{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-2);margin-bottom:12px;flex-wrap:wrap}
@@ -401,7 +407,7 @@
     /* Lot 3 — cibles tactiles (~40px mini) */
     .st-btn{width:40px;height:40px;font-size:18px}
     .stepper .numfield{min-height:40px;font-size:15px;width:66px}
-    .yr-btn{width:40px;height:40px;font-size:15px}
+    .yr-btn{height:40px;font-size:12px;padding:0 12px}
     .ctrl input[type=range]{height:34px}
     .loan-modebtn{padding:9px 14px}
     .om-field input[type=number].numfield{min-height:42px}
