@@ -214,7 +214,7 @@ const DECISIONS = [
    }},
 
   {key:"usine", icon:"", label:"Ouvrir un site",
-   desc:"Nouveau site (usine, entrepôt, magasin…) : gros CAPEX financé par emprunt, charges fixes récurrentes, capacité supplémentaire pour écouler plus de volume.",
+   desc:"Nouveau site (usine, entrepôt, magasin…) : gros CAPEX financé par emprunt, charges fixes récurrentes, et capacité supplémentaire à écouler. Le volume gagné se décrit référence par référence — un site ne fait pas croître toutes les gammes de la même façon.",
    params:[
      {key:"annee",     lab:"Année de mise en service",     kind:"year",  v:2},
      {key:"capex",     lab:"Investissement (CAPEX)",       kind:"money", v:800000, min:0, max:5000000, step:50000},
@@ -223,18 +223,25 @@ const DECISIONS = [
      {key:"tauxEmp",   lab:"Taux de l'emprunt",            kind:"pct",   v:5.5, min:0, max:20, step:0.25},
      {key:"dureeEmp",  lab:"Durée de l'emprunt (ans)",     kind:"years", v:10, min:1, max:25, step:1},
      {key:"cf",        lab:"Charges fixes / an",           kind:"money", v:120000, min:0, max:1000000, step:10000, per:true},
-     {key:"capacite",  lab:"Capacité supplémentaire",      kind:"pct",   v:30, min:0, max:200, step:5, per:true},
-     {key:"ramp1",     lab:"Capacité atteinte — 1ʳᵉ année",kind:"pct",   v:40, min:0, max:100, step:5},
-     {key:"ramp2",     lab:"Capacité atteinte — 2ᵉ année", kind:"pct",   v:70, min:0, max:100, step:5},
+     {key:"capacites", lab:"Capacité par référence",       kind:"refcap", v:{}},
    ],
+   // Le volume supplémentaire est saisi PAR RÉFÉRENCE, en unités, avec sa propre trajectoire
+   // (valeur ou croissance, année par année) : la montée en charge se décrit dans la trajectoire,
+   // il n'y a donc plus de pourcentages « 1ʳᵉ / 2ᵉ année » à renseigner à côté.
    apply:(vv,drv)=>{
      // le site s'amortit sur SA durée (bâtiment = 20-30 ans), pas sur la durée moyenne du parc
      drv.capexL.push({annee:vv.annee, montant:vv.capex, duree:vv.dureeAmor});
+     const caps=(vv.capacites && typeof vv.capacites==='object')? vv.capacites : {};
      for(let t=vv.annee;t<NY;t++){
-       drv.cf[t]+=dv(vv,'cf',t);               // les charges fixes tombent dès la mise en service…
-       const k=t-vv.annee;
-       const ramp = k===0 ? vv.ramp1 : (k===1 ? vv.ramp2 : 1);   // …le volume, lui, monte progressivement
-       drv.volMult[t]*=(1+dv(vv,'capacite',t)*ramp);
+       drv.cf[t]+=dv(vv,'cf',t);               // les charges fixes tombent dès la mise en service
+       drv.refB.forEach(r=>{
+         const s=caps[r.nom]; if(!s) return;
+         const add=Math.max(0, +s[t]||0);      // volume supplémentaire écoulé grâce au site
+         if(!add) return;
+         r.vol[t]  += add;
+         drv.ca[t]   += add*r.prix[t];
+         drv.chgv[t] += add*r.cout[t];
+       });
      }
    },
    // l'emprunt du site rejoint le portefeuille en annuités constantes (tiré l'année de mise en service)
@@ -333,6 +340,19 @@ function toEngineDec(ins){
       const o={}; Object.keys(src).forEach(k=>{ const n=parseFloat(src[k]); if(!isNaN(n)) o[k]=n; });
       vals[p.key]=o; return;
     }
+    // capacité par référence : {réf: {v, ov}} -> {réf: série de NY volumes}, développée ici
+    // pour que `apply` n'ait plus qu'à lire une valeur par année.
+    if(p.kind==='refcap'){
+      const src=(ins.vals[p.key] && typeof ins.vals[p.key]==='object')? ins.vals[p.key] : {};
+      const t0=parseInt(ins.vals.annee,10)||0;
+      const o={};
+      Object.keys(src).forEach(k=>{
+        const e=src[k]||{}, base=parseFloat(e.v)||0;
+        if(!base && !e.ov) return;
+        o[k]= e.ov ? ovSeries(e.ov, base, t0) : new Array(NY).fill(base);
+      });
+      vals[p.key]=o; return;
+    }
     let v=parseFloat(ins.vals[p.key]); if(isNaN(v))v=0;
     const div = p.kind==='pct' ? 100 : 1;
     vals[p.key]= v/div;
@@ -359,6 +379,9 @@ function syncDecFromDOM(){
         document.querySelectorAll('.dp-refin[data-dk="'+ins.id+'"]').forEach(inp=>{ o[inp.dataset.ref]=parseFloat(inp.value)||0; });
         ins.vals[p.key]=o; return;
       }
+      // capacité par référence : saisie dans sa propre modale, qui écrit directement
+      // dans ins.vals — surtout ne pas l'écraser depuis la carte de décision.
+      if(p.kind==='refcap') return;
       const el=document.getElementById('dp_'+ins.id+'_'+p.key); if(el) ins.vals[p.key]=el.value;
     });
   });
@@ -372,6 +395,7 @@ const fEUR = x => isFinite(x)? new Intl.NumberFormat('fr-FR',{style:'currency',c
 const fPCT = x => isFinite(x)? (x*100).toFixed(1).replace('.',',')+' %' : "—";
 const fX   = x => isFinite(x)? x.toFixed(1).replace('.',',')+'×' : "n.s.";
 const fJ   = x => isFinite(x)? Math.round(x)+' j' : "—";
+const fNB  = x => isFinite(x)? new Intl.NumberFormat('fr-FR',{maximumFractionDigits:0}).format(x) : "—";
 const cls  = x => x<0 ? "neg" : "pos";
 // infobulle pédagogique (title natif, robuste) — esc() défini plus bas (hoisté)
 const tipHTML = txt => `<span class="tip" title="${esc(txt)}">i</span>`;
@@ -666,7 +690,9 @@ function renderYearModal(){
 function buildDrivers(H){
   const N=NY, A=()=>new Array(N).fill(0);
   const cf=A(),perso=A(),capex=A();
-  const volMult=A().fill(1);   // multiplicateur de volume commun (décisions gamme / usine / cession)
+  // Plus de multiplicateur de volume global : chaque décision qui touche aux volumes
+  // (gamme, site, cession) agit désormais RÉFÉRENCE PAR RÉFÉRENCE. Un rabot uniforme
+  // ne décrit aucune décision réelle.
   // canaux d'injection « haut de bilan » alimentés par les décisions (capital / rachat / cession)
   const equityInj=A(),gainCession=A(),nbvCession=A(),proceedsCession=A();
   // poches d'amortissement à durée SPÉCIFIQUE : {annee, montant, duree}. Un bâtiment s'amortit
@@ -693,7 +719,7 @@ function buildDrivers(H){
     perso[t] = ov.persoN? ov.persoN[t]: H.persoN;
     capex[t] = ov.capex ? ov.capex[t] : H.capex;
   }
-  return {ca,chgv,refB,volMult,cf,perso,capex,capexL,equityInj,gainCession,nbvCession,proceedsCession};
+  return {ca,chgv,refB,cf,perso,capex,capexL,equityInj,gainCession,nbvCession,proceedsCession};
 }
 
 function compute(H, decisions){
@@ -747,8 +773,8 @@ function compute(H, decisions){
   let immoGen=H.immoOuv0, vncL=0;
 
   for(let t=0;t<N;t++){
-    CA[t]   = drv.ca[t]  *drv.volMult[t];   // somme des références × multiplicateur de volume (décisions)
-    chgv[t] = drv.chgv[t]*drv.volMult[t];
+    CA[t]   = drv.ca[t];      // somme des références, décisions déjà appliquées référence par référence
+    chgv[t] = drv.chgv[t];
     marge[t]= CA[t]-chgv[t];
     EBITDA[t]= marge[t]-drv.cf[t]-drv.perso[t];
     // immos (tableau roulant) — amortissement linéaire classique (valeur brute cumulée / durée)
@@ -824,10 +850,10 @@ function compute(H, decisions){
     pointMort[t] = tauxMarge>0 ? (drv.cf[t]+drv.perso[t])/tauxMarge : NaN;
     margeSecu[t] = CA[t]!==0 ? (CA[t]-pointMort[t])/CA[t] : NaN;
   }
-  // détail par référence (après multiplicateur de volume) pour l'onglet d'analyse
+  // détail par référence (décisions incluses) pour l'onglet d'analyse
   const refSeries = drv.refB.map(rb=>{
     const rca=A(),rvol=A(),rmarge=A();
-    for(let t=0;t<N;t++){ rvol[t]=rb.vol[t]*drv.volMult[t]; rca[t]=rvol[t]*rb.prix[t]; rmarge[t]=rvol[t]*(rb.prix[t]-rb.cout[t]); }
+    for(let t=0;t<N;t++){ rvol[t]=rb.vol[t]; rca[t]=rvol[t]*rb.prix[t]; rmarge[t]=rvol[t]*(rb.prix[t]-rb.cout[t]); }
     return {nom:rb.nom, ca:rca, vol:rvol, prix:rb.prix.slice(), cout:rb.cout.slice(), marge:rmarge};
   });
   // Free cash flow = flux d'exploitation + flux d'investissement (avant financement).
@@ -1048,6 +1074,22 @@ function decParamHTML(dk,p,val){
     return `<div class="dp dp-split"><label>${p.lab}</label>
       <div class="dp-refs">${rows||'<span class="dp-none">Aucune référence à céder.</span>'}</div></div>`;
   }
+  // capacité par référence : la carte n'affiche qu'un résumé + un bouton, la saisie est en modale
+  if(p.kind==='refcap'){
+    const cur=(val && typeof val==='object')? val : {};
+    let n=0, tot=0;
+    Object.keys(cur).forEach(k=>{ const e=cur[k]||{}; const b=parseFloat(e.v)||0;
+      if(b || e.ov){ n++; tot+=b; } });
+    const resume = n
+      ? `${n} référence${n>1?'s':''} · +${fNB(tot)} unités en année 1`
+      : 'Aucune capacité répartie';
+    return `<div class="dp dp-cap-row"><label>${p.lab}</label>
+      <div class="dp-cap-side">
+        <span class="dp-cap-sum ${n?'on':''}">${resume}</span>
+        <button type="button" class="yr-btn dp-cap ${n?'on':''}" data-dk="${dk}" data-pk="${p.key}"
+                title="Répartir le volume supplémentaire référence par référence">Répartir…</button>
+      </div></div>`;
+  }
   if(p.kind==='year'){
     const cur=Math.min(parseInt(v,10)||0, NY-1);
     const opts=ANNEES.map((a,i)=>`<option value="${i}" ${i===cur?'selected':''}>${a}</option>`).join('');
@@ -1109,6 +1151,7 @@ function buildDecisions(){
   });
   // bouton « an » des paramètres de décision : ouvre la modale par année sur ce paramètre
   root.querySelectorAll('.dp-yr').forEach(b=>b.addEventListener('click',()=>openDecYearModal(b.dataset.dk,b.dataset.pk)));
+  root.querySelectorAll('.dp-cap').forEach(b=>b.addEventListener('click',()=>openCapModal(b.dataset.dk,b.dataset.pk)));
   // steppers +/- (data-dk = id d'instance, param résolu via son type)
   root.querySelectorAll('.dp-btn').forEach(b=>b.addEventListener('click',()=>{
     const ins=decInstances.find(i=>i.id===b.dataset.dk); if(!ins) return;
@@ -1315,6 +1358,108 @@ function refSummary(){
   const a=document.getElementById('refModalSum'); if(a) a.innerHTML=txt;
   const b=document.getElementById('refSummaryPanel'); if(b) b.innerHTML=txt;
 }
+// ============================================================
+//  MODALE « CAPACITÉ PAR RÉFÉRENCE » (décision « Ouvrir un site »)
+//  Un site n'augmente pas toutes les gammes de la même façon : on saisit, pour chaque
+//  référence, le volume supplémentaire écoulé, avec sa propre trajectoire de montée en charge.
+// ============================================================
+let capCtx=null;   // {insId, pk}
+function capBag(refName){
+  const ins=decInstances.find(i=>i.id===capCtx.insId); if(!ins) return null;
+  const pk=capCtx.pk;
+  if(!ins.vals[pk] || typeof ins.vals[pk]!=='object') ins.vals[pk]={};
+  if(!ins.vals[pk][refName] || typeof ins.vals[pk][refName]!=='object') ins.vals[pk][refName]={v:0, ov:null};
+  return ins.vals[pk][refName];
+}
+function openCapModal(insId,pk){
+  syncDecFromDOM();
+  capCtx={insId,pk};
+  renderCapList();
+  document.getElementById('capModal').classList.add('open');
+}
+// trajectoire d'UNE référence : même modale « Évolution » que partout ailleurs
+function openCapYearModal(refName){
+  const ins=decInstances.find(i=>i.id===capCtx.insId); if(!ins) return;
+  ymKey=capCtx.insId+'.'+capCtx.pk+'.'+refName;
+  openYM({
+    lab:'Capacité — '+refName,
+    it:{kind:'num', step:100},
+    get:()=>capBag(refName).ov,
+    set:o=>{ capBag(refName).ov = o||null; renderCapList(); refresh(); },
+    base:()=>+capBag(refName).v||0,
+    setBase:v=>{ capBag(refName).v=v; renderCapList(); refresh(); },
+    // la montée en charge démarre à l'année de mise en service du site
+    t0:()=>parseInt(ins.vals.annee,10)||0,
+    auto:()=>+capBag(refName).v||0
+  });
+}
+function renderCapList(){
+  const root=document.getElementById('capList'); if(!root || !capCtx) return;
+  const ins=decInstances.find(i=>i.id===capCtx.insId); if(!ins) return;
+  const an=parseInt(ins.vals.annee,10)||0;
+  const names=knownRefNames();
+  root.innerHTML = names.length ? names.map(n=>{
+    const e=capBag(n);
+    const k=ovKind(e.ov);
+    const traj = k==='rates' ? 'croissance' : k==='values' ? 'année par année' : 'constant';
+    return `<div class="cap-row">
+      <span class="cap-nom">${escAttr(n)}</span>
+      <span class="cap-in">
+        <input type="number" class="numfield cap-num" data-ref="${escAttr(n)}"
+               step="100" value="${+e.v||0}"><i>unités</i></span>
+      <button type="button" class="yr-btn cap-yr ${k?'on':''}" data-ref="${escAttr(n)}"
+              title="Décrire la montée en charge : valeur ou croissance, année par année">Évolution</button>
+      <span class="cap-traj">${traj}</span>
+    </div>`;
+  }).join('') : '<div class="scn-empty">Aucune référence produit à alimenter.</div>';
+  capSummary();
+}
+// résumé du pied de modale — séparé du rendu de la liste pour pouvoir le rafraîchir
+// pendant la saisie sans reconstruire les champs (et donc sans perdre le focus)
+function capSummary(){
+  const sum=document.getElementById('capSum'); if(!sum || !capCtx) return;
+  const ins=decInstances.find(i=>i.id===capCtx.insId); if(!ins) return;
+  const an=Math.min(parseInt(ins.vals.annee,10)||0, NY-1);
+  let tot=0, ca=0;
+  knownRefNames().forEach(n=>{
+    const b=+capBag(n).v||0; tot+=b;
+    const r=refs.find(x=>(x.nom||'Référence')===n);
+    if(r) ca += b*refN(r,'prixN','prixOv');
+  });
+  sum.innerHTML = tot
+    ? `+ <b>${fNB(tot)}</b> unités dès ${ANNEES[an]} · environ <b>${fEUR(ca)}</b> de chiffre d'affaires supplémentaire`
+    : `Aucun volume saisi — le site coûterait sans rien rapporter.`;
+}
+function buildCapModal(){
+  const modal=document.createElement('div'); modal.className='modal-overlay'; modal.id='capModal';
+  modal.innerHTML=`<div class="modal" style="max-width:680px">
+    <div class="modal-head"><h2>Capacité supplémentaire par référence</h2>
+      <button class="modal-close" id="capClose" title="Fermer">✕</button></div>
+    <p class="modal-sub">Un site n'augmente pas toutes les gammes de la même façon. Indiquez, pour chaque référence, le <b>volume supplémentaire</b> (en unités) que le site permet d'écouler à partir de sa mise en service. Le bouton <b>« Évolution »</b> décrit la <b>montée en charge</b> — en valeur ou en croissance, identique chaque année ou année par année.</p>
+    <div id="capList"></div>
+    <div class="modal-foot"><span id="capSum"></span><button class="btn-primary" id="capDone">Terminé</button></div>
+  </div>`;
+  document.body.appendChild(modal);
+  const root=document.getElementById('capList');
+  root.addEventListener('input',e=>{
+    const el=e.target;
+    if(el.classList.contains('cap-num')){
+      capBag(el.dataset.ref).v = parseFloat(el.value)||0;
+      // ⚠️ surtout PAS renderCapList() ici : reconstruire la liste ferait perdre
+      // le focus du champ à chaque frappe. On ne rafraîchit que le résumé.
+      capSummary(); refresh();
+    }
+  });
+  root.addEventListener('click',e=>{
+    const b=e.target.closest('button.cap-yr'); if(!b) return;
+    openCapYearModal(b.dataset.ref);
+  });
+  const close=()=>{ modal.classList.remove('open'); buildDecisions(); refresh(); };
+  document.getElementById('capClose').addEventListener('click',close);
+  document.getElementById('capDone').addEventListener('click',close);
+  modal.addEventListener('click',e=>{ if(e.target===modal) close(); });
+}
+
 function buildRefModal(){
   const modal=document.createElement('div'); modal.className='modal-overlay'; modal.id='refModal';
   modal.innerHTML=`<div class="modal" style="max-width:760px">
@@ -2169,7 +2314,8 @@ buildInputs();
 buildOpeningMode();
 buildFinanceModal();
 buildRefModal();
-buildYearModal();
+buildCapModal();
+buildYearModal();   // en dernier : son overlay doit se superposer aux autres modales
 loadState();      // restaure les saisies précédentes si présentes
 renderScenarioList();
 applyHorizon();   // synchronise l'horizon (NY/ANNEES) avec le paramètre restauré, puis recalcule
