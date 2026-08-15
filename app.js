@@ -6,15 +6,15 @@ const GROUPS = [
   {titre:"Paramètres clés", open:false, items:[
     {key:"nbAnnees", lab:"Nombre d'années de prévision", v:5, min:3, max:10, step:1, kind:"years",
       tip:"Durée de l'horizon de prévision (de 3 à 10 ans). Toutes les tables, graphes et la valo DCF s'adaptent automatiquement."},
-    {key:"capex", lab:"CAPEX courant / an",        v:150000, min:0, max:1000000, step:10000, kind:"money",
+    {key:"capex", lab:"CAPEX courant / an",        v:110000, min:0, max:1000000, step:10000, kind:"money",
       tip:"Le chiffre d'affaires, les volumes, prix et coûts variables se règlent désormais par référence produit (bouton « Gérer les références »)."},
   ]},
-  {titre:"Coûts & marge (avancé)", open:false, items:[
-    {key:"cfN",   lab:"Charges fixes en N",         v:120000, min:0, max:1000000, step:10000, kind:"money"},
-    {key:"persoN",lab:"Charges de personnel en N",  v:60000, min:0, max:1000000, step:10000, kind:"money"},
+  {titre:"Coûts & marge", open:false, items:[
+    {key:"cfN",   lab:"Charges fixes en N",         v:420000, min:0, max:1000000, step:10000, kind:"money"},
+    {key:"persoN",lab:"Charges de personnel en N",  v:380000, min:0, max:1000000, step:10000, kind:"money"},
     {key:"tauxIS",lab:"Taux d'imposition (IS)",     v:25,  min:0, max:40, step:1, kind:"pct"},
   ]},
-  {titre:"BFR — délais (avancé)", open:false, items:[
+  {titre:"BFR — délais", open:false, items:[
     {key:"DSO",lab:"DSO — délai clients",      v:45, min:0, max:180, step:5, kind:"days",
       tip:"Days Sales Outstanding : délai moyen de paiement des clients, en jours. Plus il est élevé, plus le cash est immobilisé dans les créances."},
     {key:"DPO",lab:"DPO — délai fournisseurs", v:60, min:0, max:180, step:5, kind:"days",
@@ -22,7 +22,7 @@ const GROUPS = [
     {key:"DIO",lab:"DIO — durée de stockage",  v:30, min:0, max:180, step:5, kind:"days",
       tip:"Days Inventory Outstanding : durée moyenne de stockage, en jours. Plus il est élevé, plus le stock gèle du cash."},
   ]},
-  {titre:"Immobilisations (avancé)", open:false, items:[
+  {titre:"Immobilisations", open:false, items:[
     {key:"immoOuv0",lab:"Immos nettes ouverture N", v:800000, min:0, max:3000000, step:50000, kind:"money"},
     {key:"duree",   lab:"Durée d'amortissement",     v:8, min:1, max:25, step:1, kind:"years"},
   ]},
@@ -30,23 +30,23 @@ const GROUPS = [
     {key:"wacc",     lab:"Coût du capital (WACC)", v:8, min:0, max:25, step:0.5, kind:"pct",
       tip:"Coût Moyen Pondéré du Capital : rendement minimum attendu par les financeurs (dette + fonds propres). Sert de seuil au conseiller (ROCE > WACC = création de valeur) ET de taux d'actualisation du DCF."},
   ]},
-  {titre:"Financement (avancé)", open:false, items:[
+  {titre:"Financement", open:false, items:[
     {key:"tauxDiv",  lab:"Taux de dividende",     v:30, min:0, max:100, step:5, kind:"pct"},
-    {key:"rnN1",     lab:"Résultat net N-1",      v:180000, min:-200000, max:500000, step:10000, kind:"money"},
+    {key:"rnN1",     lab:"Résultat net N-1",      v:70000, min:-200000, max:500000, step:10000, kind:"money"},
   ]},
-  {titre:"Valorisation DCF (avancé)", view:'dcf', open:false, items:[
+  {titre:"Valorisation DCF", view:'dcf', open:false, items:[
     {key:"dcfG",   lab:"Croissance perpétuelle (g)", v:2, min:-2, max:6, step:0.25, kind:"pct",
       tip:"Taux de croissance à l'infini des flux après l'horizon (valeur terminale de Gordon). Doit rester < WACC et proche de la croissance long terme de l'économie."},
     {key:"dcfExit",lab:"Multiple de sortie (EV/EBITDA ×)", v:6, min:1, max:20, step:0.5, kind:"num",
       tip:"Méthode alternative de valeur terminale : on revend l'entreprise en fin d'horizon à ce multiple d'EBITDA. Sert de contre-vérification à la méthode de Gordon."},
   ]},
-  {titre:"Bilan d'ouverture (avancé)", open:false, items:[
-    {key:"openStocks",  lab:"Stocks ouverture",          v:40000, min:0, max:500000, step:5000, kind:"money"},
-    {key:"openCreances",lab:"Créances clients ouverture",v:60000, min:0, max:500000, step:5000, kind:"money"},
+  {titre:"Bilan d'ouverture", open:false, items:[
+    {key:"openStocks",  lab:"Stocks ouverture",          v:110000, min:0, max:500000, step:5000, kind:"money"},
+    {key:"openCreances",lab:"Créances clients ouverture",v:290000, min:0, max:500000, step:5000, kind:"money"},
     {key:"tresoOuv0",   lab:"Trésorerie ouverture (calculée)", v:50000, kind:"money", derived:true,
       tip:"Calculée pour équilibrer le bilan d'ouverture : capitaux propres + dettes (dont dette d'ouverture) − immos − BFR d'ouverture. Conséquence : + de dette à l'ouverture = + de trésorerie."},
-    {key:"openDettesF", lab:"Dettes fournisseurs ouv.",  v:45000, min:0, max:500000, step:5000, kind:"money"},
-    {key:"cpOuv0",      lab:"Capitaux propres ouverture",v:405000, min:0, max:3000000, step:5000, kind:"money"},
+    {key:"openDettesF", lab:"Dettes fournisseurs ouv.",  v:220000, min:0, max:500000, step:5000, kind:"money"},
+    {key:"cpOuv0",      lab:"Capitaux propres ouverture",v:650000, min:0, max:3000000, step:5000, kind:"money"},
   ]},
 ];
 function mkYears(n){ return Array.from({length:n},(_,i)=> i===0?'N':'N+'+i); }
@@ -75,8 +75,18 @@ let fund={...FUND_DEF};
 // ============================================================
 // Chaque métrique = une valeur en N + une trajectoire optionnelle décrite dans la modale
 // « par année » (valeur ou croissance). Plus de taux de croissance en doublon dans la carte.
+// Gamme par défaut d'une PME industrielle : un produit de volume, un produit premium
+// (marge unitaire forte, volume faible) et une activité de services récurrents à forte marge.
+// Les trois ensemble donnent un mix réaliste — et rendent l'effet mix visible dès l'ouverture.
+// Croissance de volume différenciée : le premium et les services croissent plus vite que
+// la ligne de volume. Ce sont aussi les deux plus fortes marges → le mix s'améliore avec le
+// temps, et l'onglet « Par référence » raconte quelque chose dès l'ouverture.
+// trajectoire « croissance constante de x % par an », au format de la modale « Évolution »
+const croissance = x => ({kind:'rates', mode:'const', r:new Array(10).fill(x)});
 const REFS_DEF = [
-  {id:'r1', nom:'Produit principal', volN:10000, prixN:50, coutN:22.5, volOv:null, prixOv:null, coutOv:null},
+  {id:'r1', nom:'Ligne standard',       volN:12000, prixN:85,  coutN:52,  volOv:croissance(3), prixOv:null, coutOv:null},
+  {id:'r2', nom:'Ligne premium',        volN:3500,  prixN:210, coutN:118, volOv:croissance(8), prixOv:null, coutOv:null},
+  {id:'r3', nom:'Pièces & maintenance', volN:9000,  prixN:68,  coutN:34,  volOv:croissance(5), prixOv:null, coutOv:null},
 ];
 let refs = JSON.parse(JSON.stringify(REFS_DEF));   // source de vérité (unités d'affichage)
 const REF_METRICS = [
@@ -177,7 +187,7 @@ const DECISIONS = [
    }},
 
   {key:"gamme", icon:"", label:"Élargir la gamme",
-   desc:"Lancer une nouvelle référence produit, datée : elle démarre l'année de lancement (0 avant), avec son propre prix et coût unitaire. Elle change le mix et le taux de marge, et apparaît dans l'onglet « Par référence ». La cannibalisation mesure la part de ses ventes reprise aux références déjà en place — sans elle, tout lancement paraît relutif par construction.",
+   desc:"Lancer une nouvelle référence produit à partir d'une année donnée, avec son propre prix et son propre coût unitaire. Elle s'ajoute aux références existantes, change le mix et donc le taux de marge, et apparaît dans l'onglet « Par référence ».",
    params:[
      {key:"annee",  lab:"Année de lancement",   kind:"year",  v:2},
      {key:"volN",   lab:"Volume (année 1)",      kind:"unit",  v:1500, min:0, max:1000000, step:100, per:true},
@@ -185,7 +195,6 @@ const DECISIONS = [
      {key:"coutN",  lab:"Coût unitaire",         kind:"money", v:45, min:0, max:100000, step:5, per:true},
      {key:"capex",  lab:"Invest. de lancement",  kind:"money", v:80000, min:0, max:1000000, step:10000},
      {key:"cf",     lab:"Charges fixes / an",    kind:"money", v:0, min:0, max:1000000, step:5000, per:true},
-     {key:"cannib", lab:"Cannibalisation",       kind:"pct",   v:0, min:0, max:100, step:5, per:true},
    ],
    // crée une VRAIE référence datée (0 avant le lancement), avec sa propre économie prix/coût :
    // elle s'agrège dans ca=Σvol·prix et chgv=Σvol·cout comme les autres, et modifie donc le mix.
@@ -196,22 +205,6 @@ const DECISIONS = [
        vol[t] = dv(vv,'volN',t);
        prix[t]= dv(vv,'prixN',t);
        cout[t]= dv(vv,'coutN',t);
-       // CANNIBALISATION — appliquée AVANT d'ajouter la gamme, sinon elle se cannibaliserait
-       // elle-même. Le CA repris est un % des ventes de la NOUVELLE gamme (pas un rabot
-       // forfaitaire), retiré aux références déjà en place au prorata de leur poids.
-       const cannibT=dv(vv,'cannib',t);
-       if(cannibT>0){
-         let caExist=0;
-         drv.refB.forEach(r=>{ caExist += r.vol[t]*r.prix[t]; });
-         if(caExist>0){
-           const perte=Math.min(caExist, vol[t]*prix[t]*cannibT);
-           const f=1-perte/caExist;
-           let cvPerte=0;
-           drv.refB.forEach(r=>{ cvPerte += r.vol[t]*(1-f)*r.cout[t]; r.vol[t]*=f; });
-           drv.ca[t]   -= perte;      // le CA perd ce que la gamme reprend à l'existant…
-           drv.chgv[t] -= cvPerte;    // …et les charges variables correspondantes disparaissent aussi
-         }
-       }
        drv.ca[t]   += vol[t]*prix[t];
        drv.chgv[t] += vol[t]*cout[t];
        drv.cf[t]   += dv(vv,'cf',t);  // structure récurrente du lancement (marketing, chef de produit…)
@@ -392,7 +385,13 @@ const tipHTML = txt => `<span class="tip" title="${esc(txt)}">i</span>`;
 // ============================================================
 const PERYEAR_KEYS = ['capex','cfN','persoN','tauxIS','DSO','DPO','DIO','tauxDiv'];
 const ITEM = {}; GROUPS.flatMap(g=>g.items).forEach(it=>ITEM[it.key]=it);
-let overrides = {};   // key -> tableau (longueur NY) de valeurs en unité d'AFFICHAGE (brut), ou absent = auto
+// key -> trajectoire (valeurs par année ou croissance), en unité d'AFFICHAGE ; absent = valeur constante.
+// Par défaut on inflate les charges : sans cela le CA croît pendant que les coûts restent figés
+// en nominal, et le résultat s'envole pour de mauvaises raisons (un DAF le voit tout de suite).
+let overrides = {
+  cfN:    croissance(2),   // charges fixes : inflation
+  persoN: croissance(3),   // personnel : inflation + progression salariale
+};
 const numOf = k => { const el=document.getElementById('num_'+k); return el? (parseFloat(el.value)||0) : (ITEM[k]?ITEM[k].v:0); };
 // valeur de la trajectoire auto, en unité d'affichage (sert à pré-remplir / prolonger un override)
 function autoVal(key,t){
@@ -831,8 +830,17 @@ function compute(H, decisions){
     for(let t=0;t<N;t++){ rvol[t]=rb.vol[t]*drv.volMult[t]; rca[t]=rvol[t]*rb.prix[t]; rmarge[t]=rvol[t]*(rb.prix[t]-rb.cout[t]); }
     return {nom:rb.nom, ca:rca, vol:rvol, prix:rb.prix.slice(), cout:rb.cout.slice(), marge:rmarge};
   });
+  // Free cash flow = flux d'exploitation + flux d'investissement (avant financement).
+  // C'est le cash que l'entreprise dégage réellement, disponible pour les prêteurs et les actionnaires.
+  const FCF=A();
+  for(let t=0;t<N;t++) FCF[t]=fExpl[t]+fInv[t];
   Object.assign(R,{CA,chgv,marge,cf:drv.cf,perso:drv.perso,capex:capexTot,EBITDA,dot,EBIT,chgfin,resExcept:drv.gainCession,RAI,IS,RN,div,BFR,varBFR,
     cpClot,tresoClot,detteOuv,detteClot,detteNette,levier,ROCE,bfrJours,croiss,margeEBITDA,pointMort,margeSecu,ctrl,fin,refSeries,openTreso,
+    // tableau de flux + bilan : calculés depuis toujours, désormais exposés pour l'affichage
+    fExpl,fInv,fFin,FCF,varTreso,tresoOuv,cessions:drv.proceedsCession,
+    immoClot,stocks,creances,df,cpOuv,actif,passif,
+    // postes du bilan d'ouverture, pour afficher l'équation d'équilibrage en clair
+    ouverture:{cp:cpOuv0Eff, dette:fin.detteOuv[0], immo:H.immoOuv0, bfr:BFRouv, treso:openTreso},
     funding:{mode:(H.openMode||'treso'), besoin:besoinFin, emprunt:emprAmor, apport:apportCap}});
   return R;
 }
@@ -894,11 +902,16 @@ function buildOpeningMode(){
   if(!anchor) return;
   const box=document.createElement('div'); box.className='open-mode'; box.id='openModeCtrl';
   box.innerHTML=`
-    <div class="om-label">Équilibrage du bilan d'ouverture</div>
+    <div class="om-label">Équilibrer le bilan d'ouverture</div>
+    <div class="om-intro">Un bilan doit être équilibré : l'actif est toujours égal au passif.
+      Vous saisissez tous les postes sauf un — celui qui reste se déduit des autres.
+      Choisissez lequel.</div>
     <div class="ym-mode">
-      <button class="loan-modebtn" id="omTreso" type="button" title="La trésorerie d'ouverture est le résidu qui équilibre le bilan">Trésorerie déduite</button>
-      <button class="loan-modebtn" id="omFund" type="button" title="On fixe une trésorerie cible et on déduit le financement à lever">Financement déduit</button>
+      <button class="loan-modebtn" id="omTreso" type="button">Déduire la trésorerie</button>
+      <button class="loan-modebtn" id="omFund" type="button">Déduire le financement</button>
     </div>
+    <div class="om-explain" id="omExplain"></div>
+    <div class="om-readout" id="fund_readout"></div>
     <div id="omFundBox" class="om-fundbox" hidden>
       <div class="om-field"><label>Trésorerie d'ouverture cible</label>
         <input type="number" id="fund_targetCash" class="numfield" step="5000" value="${fund.targetCash}"></div>
@@ -908,7 +921,6 @@ function buildOpeningMode(){
         <input type="number" id="fund_tauxAmor" class="numfield" step="0.25" value="${fund.tauxAmor}"></div>
       <div class="om-field"><label>Durée de l'emprunt d'amorçage (ans)</label>
         <input type="number" id="fund_dureeAmor" class="numfield" min="1" max="25" step="1" value="${fund.dureeAmor}"></div>
-      <div class="om-readout" id="fund_readout"></div>
     </div>`;
   anchor.parentNode.insertBefore(box, anchor);
   document.getElementById('omTreso').addEventListener('click',()=>{ openMode='treso';   renderOpeningMode(); refresh(); });
@@ -924,6 +936,14 @@ function renderOpeningMode(){
   const bt=document.getElementById('omTreso'), bf=document.getElementById('omFund');
   if(bt) bt.classList.toggle('on',!f); if(bf) bf.classList.toggle('on',f);
   const box=document.getElementById('omFundBox'); if(box) box.hidden=!f;
+  const ex=document.getElementById('omExplain');
+  if(ex) ex.innerHTML = f
+    ? `Vous fixez la trésorerie que vous voulez avoir en caisse au démarrage. Le modèle en déduit
+       <b>le financement à lever</b> pour y arriver, et le répartit entre emprunt et apport en capital.
+       La question posée&nbsp;: <i>combien dois-je lever&nbsp;?</i>`
+    : `Vous saisissez les capitaux propres et la dette d'ouverture. La trésorerie est le <b>solde</b>
+       qui fait tomber le bilan à l'équilibre. La question posée&nbsp;: <i>avec ce financement,
+       combien me reste-t-il en caisse&nbsp;?</i>`;
   const trow=document.querySelector('#inputs .ctrl[data-key="tresoOuv0"]'); if(trow) trow.style.display=f?'none':'';   // la ligne « tréso calculée » est redondante en mode financement
 }
 function syncFundInputs(){
@@ -932,13 +952,24 @@ function syncFundInputs(){
   set('fund_tauxAmor',fund.tauxAmor); set('fund_dureeAmor',fund.dureeAmor);
   const pl=document.getElementById('fund_partLab'); if(pl) pl.textContent=fund.partDette+' %';
 }
+// Affiche l'équilibrage du bilan d'ouverture EN CHIFFRES, dans les deux modes :
+// on montre l'équation posée, pas seulement son résultat.
 function updateFundReadout(R){
   const el=document.getElementById('fund_readout'); if(!el) return;
-  if(openMode!=='funding' || !R.funding){ el.innerHTML=''; return; }
+  const o=R.ouverture; if(!o){ el.innerHTML=''; return; }
+  const eq = `<div class="om-eq">`
+    + `<span>Capitaux propres <b>${fEUR(o.cp)}</b></span>`
+    + `<span>+ Dettes financières <b>${fEUR(o.dette)}</b></span>`
+    + `<span>− Immobilisations <b>${fEUR(o.immo)}</b></span>`
+    + `<span>− BFR d'ouverture <b>${fEUR(o.bfr)}</b></span>`
+    + `<span class="om-eq-res">= Trésorerie d'ouverture <b>${fEUR(o.treso)}</b></span>`
+    + `</div>`;
+  if(openMode!=='funding' || !R.funding){ el.innerHTML=eq; return; }
   const fd=R.funding;
-  el.innerHTML = fd.besoin>0
-    ? `Besoin de financement&nbsp;: <b>${fEUR(fd.besoin)}</b><br>→ emprunt d'amorçage <b>${fEUR(fd.emprunt)}</b> · apport en capital <b>${fEUR(fd.apport)}</b>`
-    : `Bilan d'ouverture déjà couvert — aucun financement à lever (trésorerie ≥ cible).`;
+  el.innerHTML = eq + (fd.besoin>0
+    ? `<div class="om-need">Besoin de financement&nbsp;: <b>${fEUR(fd.besoin)}</b><br>
+       → emprunt d'amorçage <b>${fEUR(fd.emprunt)}</b> · apport en capital <b>${fEUR(fd.apport)}</b></div>`
+    : `<div class="om-need">Bilan d'ouverture déjà couvert — aucun financement à lever (trésorerie ≥ cible).</div>`);
 }
 function stepVal(it,dir){
   const num=document.getElementById('num_'+it.key);
@@ -1574,7 +1605,12 @@ function renderTable(R){
     }).join('');
     return `<tr class="${sec?'sec':''} ${tot?'tot':''}"><td>${lab}</td>${tds}</tr>`;
   };
+  // bandeau de section : une ligne pleine largeur qui coupe le tableau en états financiers
+  const sect=(lab)=>`<tr class="sec"><td>${lab}</td>${ANNEES.map(()=>'<td></td>').join('')}</tr>`;
+  const cession = R.resExcept.some(x=>Math.abs(x)>0.5);
   let h=head;
+
+  h+=sect("COMPTE DE RÉSULTAT");
   h+=line("Chiffre d'affaires",R.CA,fEUR,false,false,true);
   h+=line("Croissance du CA",R.croiss,fPCT);
   h+=line("Charges variables",R.chgv.map(x=>-x));
@@ -1583,21 +1619,52 @@ function renderTable(R){
   h+=line("Charges de personnel",R.perso.map(x=>-x));
   h+=line("EBITDA",R.EBITDA,fEUR,true,false,true);
   h+=line("Marge d'EBITDA",R.margeEBITDA,fPCT);
-  h+=line("Dotation amortissements",R.dot.map(x=>-x));
+  h+=line("Dotation aux amortissements",R.dot.map(x=>-x));
   h+=line("EBIT",R.EBIT,fEUR,true,false,true);
   h+=line("Charges financières",R.chgfin.map(x=>-x));
-  if(R.resExcept.some(x=>Math.abs(x)>0.5)) h+=line("Résultat de cession",R.resExcept,fEUR,true);
+  if(cession) h+=line("Résultat de cession",R.resExcept,fEUR,true);
   h+=line("Résultat avant impôt",R.RAI,fEUR,true);
   h+=line("Impôt sur les sociétés",R.IS.map(x=>-x));
   h+=line("RÉSULTAT NET",R.RN,fEUR,true,false,true);
-  h+=line("Trésorerie de clôture",R.tresoClot,fEUR,true,true,true);
+
+  // Méthode indirecte : on repart du résultat net, on annule les charges non décaissées
+  // (dotations) et on corrige de la variation du besoin en fonds de roulement.
+  h+=sect("TABLEAU DE FLUX DE TRÉSORERIE");
+  h+=line("Résultat net",R.RN,fEUR,true);
+  h+=line("+ Dotation aux amortissements",R.dot);
+  h+=line("− Variation du BFR",R.varBFR.map(x=>-x),fEUR,true);
+  if(cession) h+=line("− Résultat de cession",R.resExcept.map(x=>-x),fEUR,true);
+  h+=line("Flux de trésorerie d'exploitation",R.fExpl,fEUR,true,false,true);
+  h+=line("− Investissements (CAPEX)",R.capex.map(x=>-x));
+  if(R.cessions.some(x=>Math.abs(x)>0.5)) h+=line("+ Produits de cession",R.cessions);
+  h+=line("Flux d'investissement",R.fInv,fEUR,true,false,true);
+  h+=line("FREE CASH FLOW",R.FCF,fEUR,true,false,true);
+  h+=line("Flux de financement",R.fFin,fEUR,true,false,true);
+  h+=line("Variation de trésorerie",R.varTreso,fEUR,true);
+  h+=line("Trésorerie d'ouverture",R.tresoOuv,fEUR,true);
+  h+=line("Trésorerie de clôture",R.tresoClot,fEUR,true,false,true);
+
+  h+=sect("BILAN — ACTIF");
+  h+=line("Immobilisations nettes",R.immoClot);
+  h+=line("Stocks",R.stocks);
+  h+=line("Créances clients",R.creances);
+  h+=line("Trésorerie",R.tresoClot,fEUR,true);
+  h+=line("TOTAL ACTIF",R.actif,fEUR,false,false,true);
+
+  h+=sect("BILAN — PASSIF");
+  h+=line("Capitaux propres",R.cpClot,fEUR,true);
+  h+=line("Dettes financières",R.detteClot);
+  h+=line("Dettes fournisseurs",R.df);
+  h+=line("TOTAL PASSIF",R.passif,fEUR,false,false,true);
+  h+=line("Contrôle Actif − Passif",R.ctrl,fEUR,false,false,true);
+
+  h+=sect("INDICATEURS");
   h+=line("BFR (jours de CA)",R.bfrJours,fJ);
   h+=line("Dette nette",R.detteNette);
   h+=line("Dette nette / EBITDA",R.levier,fX,false);
   h+=line("ROCE (après impôt)",R.ROCE,fPCT,false);
-  h+=line("Point mort (CA)",R.pointMort,fEUR,false,true);
+  h+=line("Point mort (CA)",R.pointMort,fEUR,false);
   h+=line("Marge de sécurité",R.margeSecu,fPCT);
-  h+=line("Contrôle Actif − Passif",R.ctrl,fEUR,false,true,true);
   document.getElementById('tbl').innerHTML=h;
 }
 
