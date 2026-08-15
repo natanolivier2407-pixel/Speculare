@@ -48,6 +48,19 @@
   .dec-desc{font-size:11.5px;color:var(--ink-2);margin:0 0 9px;line-height:1.4}
   .dp{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
   .dp label{font-size:12px;color:var(--ink-2);flex:1}
+  /* ventilation par référence (part cédée) : une ligne par référence */
+  .dp-split{display:block}
+  .dp-split>label{display:block;margin-bottom:6px}
+  .dp-refs{display:grid;gap:5px;padding-left:8px;border-left:2px solid var(--border)}
+  .dp-ref{display:flex;align-items:center;gap:7px;font-size:12px}
+  .dp-ref span{flex:1;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dp-ref input{width:64px;text-align:right}
+  .dp-ref i{font-style:normal;color:var(--muted);font-size:11px;width:12px}
+  .dp-none{font-size:11.5px;color:var(--muted);font-style:italic}
+  /* paramètre de décision piloté « par année » : le champ unique cède la place à une étiquette */
+  .dp-pertag{font-size:11px;font-weight:700;color:var(--blue);background:var(--blue-soft);
+             padding:4px 9px;border-radius:20px;white-space:nowrap}
+  .dp .yr-btn{flex:none}
   .dp select{width:96px;padding:4px 6px;background:var(--surface);border:1px solid var(--border);
     color:var(--ink);border-radius:6px;font-size:12px;text-align:right}
   .dp .stepper{margin-left:auto}
@@ -98,6 +111,14 @@
   .ym-years{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
   .ym-year{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--muted);font-weight:600}
   .ym-year .numfield{width:100%;border:1px solid var(--border);border-radius:6px;padding:5px 6px;text-align:right}
+  /* mode croissance : unité et valeur calculée sous le champ de taux */
+  .ym-year{position:relative}
+  .ym-unit{position:absolute;right:8px;top:22px;font-style:normal;font-size:11px;color:var(--muted);pointer-events:none}
+  .ym-year .numfield{padding-right:20px}
+  .ym-prev{display:block;font-size:11px;font-weight:700;color:var(--blue);font-style:normal;text-align:right}
+  .ym-year-base{justify-content:flex-start}
+  .ym-year-base .ym-prev{padding:5px 6px;border:1px dashed var(--border);border-radius:6px}
+  .ym-hint{margin:12px 0 0;font-size:11.5px;color:var(--muted);line-height:1.5}
   .reset{width:100%;margin-top:6px;padding:9px;background:var(--surface);border:1px solid var(--border);
     color:var(--ink-2);border-radius:8px;cursor:pointer;font-size:12px;font-weight:600}
   .reset:hover{color:var(--blue);border-color:var(--blue)}
@@ -203,6 +224,20 @@
   .ref-years{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
   .ref-card-foot{border-top:1px solid var(--border);margin-top:12px;padding-top:9px;font-size:12px;color:var(--muted)}
   .ref-card-foot b{color:var(--blue)}
+  /* --- références issues des décisions : lecture seule, la décision est la source de vérité --- */
+  .dref-sep{margin:18px 0 10px;font-size:11px;color:var(--muted);text-transform:uppercase;
+            letter-spacing:.5px;font-weight:700;border-top:1px solid var(--border);padding-top:12px}
+  .ref-card-ro{background:transparent;border-style:dashed}
+  .dref-nom{font-weight:700;color:var(--ink);font-size:14px}
+  .dref-tag{font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;font-weight:700;
+            color:var(--blue);background:var(--blue-soft);padding:3px 8px;border-radius:20px;white-space:nowrap}
+  .dref-body{margin-top:10px;display:grid;gap:6px}
+  .dref-m{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-size:12.5px}
+  .dref-m span{color:var(--ink-2)}
+  .dref-m b{margin-left:auto;font-variant-numeric:tabular-nums}
+  .dref-m i{font-style:normal;color:var(--muted);font-size:11.5px;min-width:76px;text-align:right;
+            font-variant-numeric:tabular-nums}
+  .dref-note{margin-top:9px;font-size:11.5px;color:var(--muted);line-height:1.5}
   /* poste d'hypothèse calculé (lecture seule) */
   .ctrl-derived{background:var(--surface-2);border:1px dashed var(--border);border-radius:8px;padding:8px 10px}
   .ctrl-derived label{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0}
@@ -298,10 +333,12 @@
   .f-constat{font-size:13px;color:var(--ink-2);line-height:1.5;margin-bottom:6px}
   .f-levier{font-size:12.5px;color:var(--ink-2);line-height:1.5;background:var(--surface-2);padding:7px 11px;border-radius:7px}
   .f-levier b{color:var(--ink)}
-  .charts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+  /* minmax(0,1fr) : sans ça une colonne ne peut pas devenir plus étroite que son contenu
+     (un canvas large fige la grille et empêche les graphes de suivre la largeur d'écran) */
+  .charts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-bottom:18px}
   .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 15px;box-shadow:var(--shadow)}
   .card h3{margin:0 0 8px;font-size:12.5px;color:var(--ink-2);font-weight:600}
-  .card canvas{max-height:210px}
+  .card canvas{max-height:210px;max-width:100%}
   table{width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
   .tblwrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px;overflow-x:auto;box-shadow:var(--shadow)}
   th,td{padding:6px 9px;text-align:right;white-space:nowrap}

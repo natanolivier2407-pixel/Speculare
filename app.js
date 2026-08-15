@@ -11,9 +11,9 @@ const GROUPS = [
   ]},
   {titre:"Coûts & marge (avancé)", open:false, items:[
     {key:"cfN",   lab:"Charges fixes en N",         v:120000, min:0, max:1000000, step:10000, kind:"money"},
-    {key:"inflCF",lab:"Inflation charges fixes",    v:2,   min:0, max:10, step:0.5, kind:"pct"},
+    {key:"inflCF",lab:"Évolution des charges fixes",v:2,   min:-15, max:15, step:0.5, kind:"pct"},
     {key:"persoN",lab:"Charges de personnel en N",  v:60000, min:0, max:1000000, step:10000, kind:"money"},
-    {key:"gPerso",lab:"Croissance personnel",       v:3,   min:-5, max:15, step:0.5, kind:"pct"},
+    {key:"gPerso",lab:"Évolution des charges de personnel", v:3, min:-20, max:15, step:0.5, kind:"pct"},
     {key:"tauxIS",lab:"Taux d'imposition (IS)",     v:25,  min:0, max:40, step:1, kind:"pct"},
   ]},
   {titre:"BFR — délais (avancé)", open:false, items:[
@@ -161,26 +161,42 @@ function buildLoans(loanDefs){
 //  DÉCISIONS DATÉES — chaque décision applique des deltas
 //  aux drivers annuels, à partir de son année de départ.
 // ============================================================
+// valeur d'un paramètre de décision à l'année t : série « par année » si elle existe, sinon constante.
+// dvHas() dit si la trajectoire est pilotée par une série — auquel cas le taux de croissance
+// associé au paramètre devient inopérant (on décrit la trajectoire OU on donne base + croissance).
+function dv(vv,key,t){ const s=vv.__s&&vv.__s[key]; return s? s[t] : vv[key]; }
+function dvHas(vv,key){ return !!(vv.__s&&vv.__s[key]); }
+
 const DECISIONS = [
   {key:"recrut", icon:"", label:"Recrutement",
-   desc:"Embaucher du personnel supplémentaire à partir d'une année donnée.",
+   desc:"Embaucher du personnel supplémentaire à partir d'une année donnée. Le coût chargé suit sa propre progression salariale : un salaire ne reste pas figé sur tout l'horizon.",
    params:[
-     {key:"annee", lab:"Année d'embauche", kind:"year", v:1},
-     {key:"cout",  lab:"Coût chargé / an", kind:"money", v:55000, min:20000, max:200000, step:5000},
+     {key:"annee",    lab:"Année d'embauche",            kind:"year",  v:1},
+     {key:"effectif", lab:"Nombre de personnes",         kind:"unit",  v:1, min:0, max:500, step:1, per:true},
+     {key:"cout",     lab:"Coût chargé / an / personne", kind:"money", v:55000, min:0, max:200000, step:5000, per:true},
+     {key:"gCout",    lab:"Progression du coût",         kind:"pct",   v:2, min:-15, max:20, step:0.5},
    ],
-   apply:(vv,drv)=>{ for(let t=vv.annee;t<NY;t++) drv.perso[t]+=vv.cout; }},
+   apply:(vv,drv)=>{
+     for(let t=vv.annee;t<NY;t++){
+       // si le coût est piloté par une série, elle porte déjà la progression : gCout ne s'applique plus
+       const prog = dvHas(vv,'cout') ? 1 : Math.pow(1+vv.gCout, t-vv.annee);
+       drv.perso[t] += dv(vv,'effectif',t) * dv(vv,'cout',t) * prog;
+     }
+   }},
 
   {key:"gamme", icon:"", label:"Élargir la gamme",
-   desc:"Lancer une nouvelle référence produit, datée : elle démarre l'année de lancement (0 avant), avec son propre prix et coût unitaire. Elle change le mix et le taux de marge, et apparaît dans l'onglet « Par référence ».",
+   desc:"Lancer une nouvelle référence produit, datée : elle démarre l'année de lancement (0 avant), avec son propre prix et coût unitaire. Elle change le mix et le taux de marge, et apparaît dans l'onglet « Par référence ». La cannibalisation mesure la part de ses ventes reprise aux références déjà en place — sans elle, tout lancement paraît relutif par construction.",
    params:[
-     {key:"annee", lab:"Année de lancement",  kind:"year",  v:2},
-     {key:"volN",  lab:"Volume (année 1)",     kind:"unit",  v:1500, min:0, max:1000000, step:100},
-     {key:"gVol",  lab:"Croissance du volume", kind:"pct",   v:8, min:-20, max:50, step:1},
-     {key:"prixN", lab:"Prix unitaire",        kind:"money", v:85, min:0, max:100000, step:5},
-     {key:"gPrix", lab:"Croissance du prix",   kind:"pct",   v:2, min:-20, max:50, step:0.5},
-     {key:"coutN", lab:"Coût unitaire",        kind:"money", v:45, min:0, max:100000, step:5},
-     {key:"gCout", lab:"Croissance du coût",   kind:"pct",   v:2, min:-20, max:50, step:0.5},
-     {key:"capex", lab:"Invest. de lancement", kind:"money", v:80000, min:0, max:1000000, step:10000},
+     {key:"annee",  lab:"Année de lancement",   kind:"year",  v:2},
+     {key:"volN",   lab:"Volume (année 1)",      kind:"unit",  v:1500, min:0, max:1000000, step:100, per:true},
+     {key:"gVol",   lab:"Croissance du volume",  kind:"pct",   v:8, min:-20, max:50, step:1},
+     {key:"prixN",  lab:"Prix unitaire",         kind:"money", v:85, min:0, max:100000, step:5, per:true},
+     {key:"gPrix",  lab:"Croissance du prix",    kind:"pct",   v:2, min:-20, max:50, step:0.5},
+     {key:"coutN",  lab:"Coût unitaire",         kind:"money", v:45, min:0, max:100000, step:5, per:true},
+     {key:"gCout",  lab:"Croissance du coût",    kind:"pct",   v:2, min:-20, max:50, step:0.5},
+     {key:"capex",  lab:"Invest. de lancement",  kind:"money", v:80000, min:0, max:1000000, step:10000},
+     {key:"cf",     lab:"Charges fixes / an",    kind:"money", v:0, min:0, max:1000000, step:5000, per:true},
+     {key:"cannib", lab:"Cannibalisation",       kind:"pct",   v:0, min:0, max:100, step:5, per:true},
    ],
    // crée une VRAIE référence datée (0 avant le lancement), avec sa propre économie prix/coût :
    // elle s'agrège dans ca=Σvol·prix et chgv=Σvol·cout comme les autres, et modifie donc le mix.
@@ -188,11 +204,29 @@ const DECISIONS = [
      const N=NY, vol=new Array(N).fill(0), prix=new Array(N).fill(0), cout=new Array(N).fill(0);
      for(let t=vv.annee;t<N;t++){
        const k=t-vv.annee;
-       vol[t] = vv.volN *Math.pow(1+vv.gVol, k);
-       prix[t]= vv.prixN*Math.pow(1+vv.gPrix,k);
-       cout[t]= vv.coutN*Math.pow(1+vv.gCout,k);
+       // une série « par année » décrit la trajectoire complète : la croissance associée est ignorée
+       vol[t] = dvHas(vv,'volN') ? dv(vv,'volN',t) : vv.volN *Math.pow(1+vv.gVol, k);
+       prix[t]= dvHas(vv,'prixN')? dv(vv,'prixN',t): vv.prixN*Math.pow(1+vv.gPrix,k);
+       cout[t]= dvHas(vv,'coutN')? dv(vv,'coutN',t): vv.coutN*Math.pow(1+vv.gCout,k);
+       // CANNIBALISATION — appliquée AVANT d'ajouter la gamme, sinon elle se cannibaliserait
+       // elle-même. Le CA repris est un % des ventes de la NOUVELLE gamme (pas un rabot
+       // forfaitaire), retiré aux références déjà en place au prorata de leur poids.
+       const cannibT=dv(vv,'cannib',t);
+       if(cannibT>0){
+         let caExist=0;
+         drv.refB.forEach(r=>{ caExist += r.vol[t]*r.prix[t]; });
+         if(caExist>0){
+           const perte=Math.min(caExist, vol[t]*prix[t]*cannibT);
+           const f=1-perte/caExist;
+           let cvPerte=0;
+           drv.refB.forEach(r=>{ cvPerte += r.vol[t]*(1-f)*r.cout[t]; r.vol[t]*=f; });
+           drv.ca[t]   -= perte;      // le CA perd ce que la gamme reprend à l'existant…
+           drv.chgv[t] -= cvPerte;    // …et les charges variables correspondantes disparaissent aussi
+         }
+       }
        drv.ca[t]   += vol[t]*prix[t];
        drv.chgv[t] += vol[t]*cout[t];
+       drv.cf[t]   += dv(vv,'cf',t);  // structure récurrente du lancement (marketing, chef de produit…)
      }
      drv.refB.push({nom:nom||"Nouvelle gamme", vol, prix, cout});
      drv.capex[vv.annee]+=vv.capex;
@@ -201,21 +235,25 @@ const DECISIONS = [
   {key:"usine", icon:"", label:"Ouvrir un site",
    desc:"Nouveau site (usine, entrepôt, magasin…) : gros CAPEX financé par emprunt, charges fixes récurrentes, capacité supplémentaire pour écouler plus de volume.",
    params:[
-     {key:"annee",    lab:"Année de mise en service", kind:"year",  v:2},
-     {key:"capex",    lab:"Investissement (CAPEX)",   kind:"money", v:800000, min:0, max:5000000, step:50000},
-     {key:"emprunt",  lab:"Financé par emprunt",      kind:"money", v:600000, min:0, max:5000000, step:50000},
-     {key:"tauxEmp",  lab:"Taux de l'emprunt",        kind:"pct",   v:5.5, min:0, max:20, step:0.25},
-     {key:"dureeEmp", lab:"Durée de l'emprunt (ans)", kind:"years", v:10, min:1, max:25, step:1},
-     {key:"cf",       lab:"Charges fixes / an",       kind:"money", v:120000, min:0, max:1000000, step:10000},
-     {key:"capacite", lab:"Capacité supplémentaire",  kind:"pct",   v:30, min:0, max:200, step:5},
+     {key:"annee",     lab:"Année de mise en service",     kind:"year",  v:2},
+     {key:"capex",     lab:"Investissement (CAPEX)",       kind:"money", v:800000, min:0, max:5000000, step:50000},
+     {key:"dureeAmor", lab:"Durée d'amortissement du site",kind:"years", v:20, min:1, max:40, step:1},
+     {key:"emprunt",   lab:"Financé par emprunt",          kind:"money", v:600000, min:0, max:5000000, step:50000},
+     {key:"tauxEmp",   lab:"Taux de l'emprunt",            kind:"pct",   v:5.5, min:0, max:20, step:0.25},
+     {key:"dureeEmp",  lab:"Durée de l'emprunt (ans)",     kind:"years", v:10, min:1, max:25, step:1},
+     {key:"cf",        lab:"Charges fixes / an",           kind:"money", v:120000, min:0, max:1000000, step:10000, per:true},
+     {key:"capacite",  lab:"Capacité supplémentaire",      kind:"pct",   v:30, min:0, max:200, step:5, per:true},
+     {key:"ramp1",     lab:"Capacité atteinte — 1ʳᵉ année",kind:"pct",   v:40, min:0, max:100, step:5},
+     {key:"ramp2",     lab:"Capacité atteinte — 2ᵉ année", kind:"pct",   v:70, min:0, max:100, step:5},
    ],
    apply:(vv,drv)=>{
-     drv.capex[vv.annee]+=vv.capex;
-     const RAMP=[0.4,0.7,1,1,1];   // montée en charge : les charges fixes tombent tout de suite, le volume monte progressivement
+     // le site s'amortit sur SA durée (bâtiment = 20-30 ans), pas sur la durée moyenne du parc
+     drv.capexL.push({annee:vv.annee, montant:vv.capex, duree:vv.dureeAmor});
      for(let t=vv.annee;t<NY;t++){
-       drv.cf[t]+=vv.cf;
+       drv.cf[t]+=dv(vv,'cf',t);               // les charges fixes tombent dès la mise en service…
        const k=t-vv.annee;
-       drv.volMult[t]*=(1+vv.capacite*RAMP[Math.min(k,RAMP.length-1)]);
+       const ramp = k===0 ? vv.ramp1 : (k===1 ? vv.ramp2 : 1);   // …le volume, lui, monte progressivement
+       drv.volMult[t]*=(1+dv(vv,'capacite',t)*ramp);
      }
    },
    // l'emprunt du site rejoint le portefeuille en annuités constantes (tiré l'année de mise en service)
@@ -238,21 +276,34 @@ const DECISIONS = [
    apply:(vv,drv)=>{ drv.equityInj[vv.annee]-=vv.montant; }},
 
   {key:"cession", icon:"", label:"Cession d'activité",
-   desc:"Vendre une partie de l'activité : encaissement du prix de cession, sortie des actifs cédés (plus/moins-value au résultat), et baisse du CA et des charges fixes associées à partir de l'année de cession.",
+   desc:"Vendre une partie de l'activité : encaissement du prix de cession, sortie des actifs cédés (plus/moins-value au résultat), et disparition du CA, des charges fixes et du personnel associés. La part cédée se ventile référence par référence — céder une activité ne rabote pas toutes les gammes uniformément.",
    params:[
-     {key:"annee",    lab:"Année de cession",             kind:"year",  v:2},
-     {key:"prix",     lab:"Prix de cession",              kind:"money", v:400000, min:0, max:10000000, step:50000},
-     {key:"vnc",      lab:"Valeur nette comptable cédée", kind:"money", v:300000, min:0, max:10000000, step:50000},
-     {key:"baisseCA", lab:"Baisse du CA",                 kind:"pct",   v:20, min:0, max:100, step:5},
-     {key:"baisseCF", lab:"Baisse charges fixes / an",    kind:"money", v:30000, min:0, max:1000000, step:10000},
+     {key:"annee",       lab:"Année de cession",             kind:"year",  v:2},
+     {key:"prix",        lab:"Prix de cession",              kind:"money", v:400000, min:0, max:10000000, step:50000},
+     {key:"vnc",         lab:"Valeur nette comptable cédée", kind:"money", v:300000, min:0, max:10000000, step:50000},
+     {key:"parts",       lab:"Part cédée, par référence",    kind:"refsplit", v:{}},
+     {key:"baisseCF",    lab:"Baisse charges fixes / an",    kind:"money", v:30000, min:0, max:1000000, step:10000, per:true},
+     {key:"baissePerso", lab:"Baisse charges de personnel / an", kind:"money", v:0, min:0, max:1000000, step:10000, per:true},
    ],
    apply:(vv,drv)=>{
      drv.proceedsCession[vv.annee]+=vv.prix;
      drv.nbvCession[vv.annee]+=vv.vnc;
      drv.gainCession[vv.annee]+=(vv.prix - vv.vnc);        // plus-value (+) ou moins-value (−)
+     const parts=(vv.parts && typeof vv.parts==='object')? vv.parts : {};
      for(let t=vv.annee;t<NY;t++){
-       drv.volMult[t]*=(1-vv.baisseCA);                    // l'activité cédée ne génère plus de CA
-       drv.cf[t]=Math.max(0, drv.cf[t]-vv.baisseCF);       // ni ses charges fixes
+       // l'activité cédée disparaît référence par référence (CA ET charges variables)
+       let caPerdu=0, cvPerdu=0;
+       drv.refB.forEach(r=>{
+         const p=Math.min(1, Math.max(0, (+parts[r.nom]||0)/100));
+         if(p<=0) return;
+         caPerdu += r.vol[t]*p*r.prix[t];
+         cvPerdu += r.vol[t]*p*r.cout[t];
+         r.vol[t]*=(1-p);
+       });
+       drv.ca[t]   -= caPerdu;
+       drv.chgv[t] -= cvPerdu;
+       drv.cf[t]    = Math.max(0, drv.cf[t]-dv(vv,'baisseCF',t));      // ni ses charges fixes…
+       drv.perso[t] = Math.max(0, drv.perso[t]-dv(vv,'baissePerso',t)); // …ni ses salariés
      }
    }},
 ];
@@ -262,14 +313,17 @@ const DECISIONS = [
 // ============================================================
 function decType(type){ return DECISIONS.find(t=>t.key===type) || DECISIONS[0]; }
 function uid(){ return 'di'+Date.now().toString(36)+Math.floor(Math.random()*1e5).toString(36); }
-function defVals(t){ const o={}; t.params.forEach(p=>o[p.key]=p.v); return o; }
+// clone les valeurs par défaut : un param de type objet (refsplit) serait sinon PARTAGÉ
+// entre toutes les instances, et modifier l'une modifierait les autres.
+const cloneVal = v => (v && typeof v==='object') ? JSON.parse(JSON.stringify(v)) : v;
+function defVals(t){ const o={}; t.params.forEach(p=>o[p.key]=cloneVal(p.v)); return o; }
 function defaultInstances(){ return []; }   // aucune décision préchargée : l'utilisateur les ajoute via la liste « Décisions à simuler »
 function escAttr(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 let decInstances = defaultInstances();
 // normalise une instance venue d'un état sauvegardé (complète les params manquants, vérifie le type)
 function normalizeInstance(o){
   const t=decType(o&&o.type), vals=defVals(t);
-  if(o&&o.vals) t.params.forEach(p=>{ if(o.vals[p.key]!=null) vals[p.key]=o.vals[p.key]; });
+  if(o&&o.vals) t.params.forEach(p=>{ if(o.vals[p.key]!=null) vals[p.key]=cloneVal(o.vals[p.key]); });
   return {id:(o&&o.id)||uid(), type:t.key, nom:(o&&o.nom)||t.label, active:!!(o&&o.active), vals};
 }
 // reconstruit la liste d'instances depuis un état : format instances, sinon migration ancien format {dec:{key:{...}}}
@@ -287,7 +341,25 @@ function instancesFromState(s){
 // instance (valeurs d'affichage) -> décision prête pour compute (valeurs moteur, apply/applyLoan résolus)
 function toEngineDec(ins){
   const t=decType(ins.type), vals={};
-  t.params.forEach(p=>{ let v=parseFloat(ins.vals[p.key]); if(isNaN(v))v=0; vals[p.key]= p.kind==='pct'? v/100 : v; });
+  t.params.forEach(p=>{
+    // la ventilation par référence est un OBJET {nom: %} : parseFloat la détruirait (NaN → 0)
+    if(p.kind==='refsplit'){
+      const src=(ins.vals[p.key] && typeof ins.vals[p.key]==='object')? ins.vals[p.key] : {};
+      const o={}; Object.keys(src).forEach(k=>{ const n=parseFloat(src[k]); if(!isNaN(n)) o[k]=n; });
+      vals[p.key]=o; return;
+    }
+    // paramètre piloté « par année » : on développe la série et on garde la valeur en N comme scalaire
+    // (les apply() lisent la série via dv(vv,key,t) quand elle existe)
+    const rawv=ins.vals[p.key];
+    if(rawv && typeof rawv==='object' && (rawv.kind==='values'||rawv.kind==='rates')){
+      const s=ovSeries(rawv, +rawv.base||0);
+      if(s){
+        const div = p.kind==='pct' ? 100 : 1;
+        vals.__s=vals.__s||{}; vals.__s[p.key]=s.map(x=>x/div);
+        vals[p.key]=s[0]/div; return;
+      }
+    }
+    let v=parseFloat(ins.vals[p.key]); if(isNaN(v))v=0; vals[p.key]= p.kind==='pct'? v/100 : v; });
   return {id:ins.id, type:ins.type, nom:(ins.nom||t.label), active:!!ins.active, vals, apply:t.apply, applyLoan:t.applyLoan};
 }
 // synchronise le DOM (source de vérité pendant l'édition) vers decInstances, avant toute reconstruction/sauvegarde
@@ -296,7 +368,16 @@ function syncDecFromDOM(){
     const chk=document.getElementById('dec_'+ins.id); if(!chk) return;
     ins.active=chk.checked;
     const nm=document.getElementById('decname_'+ins.id); if(nm) ins.nom=nm.value;
-    decType(ins.type).params.forEach(p=>{ const el=document.getElementById('dp_'+ins.id+'_'+p.key); if(el) ins.vals[p.key]=el.value; });
+    decType(ins.type).params.forEach(p=>{
+      if(p.kind==='refsplit'){   // pas d'input unique : un champ par référence
+        const o={};
+        document.querySelectorAll('.dp-refin[data-dk="'+ins.id+'"]').forEach(inp=>{ o[inp.dataset.ref]=parseFloat(inp.value)||0; });
+        ins.vals[p.key]=o; return;
+      }
+      // paramètre « par année » : piloté par la modale, aucun champ unique à relire — ne pas l'écraser
+      if(ins.vals[p.key] && typeof ins.vals[p.key]==='object') return;
+      const el=document.getElementById('dp_'+ins.id+'_'+p.key); if(el) ins.vals[p.key]=el.value;
+    });
   });
 }
 function nextName(t){ const n=decInstances.filter(i=>i.type===t.key).length; return n? t.label+' '+(n+1) : t.label; }
@@ -343,16 +424,64 @@ function reconcileRefs(){
 // ajuste toutes les séries d'override à la longueur NY (au changement d'horizon) : prolonge en auto, tronque si besoin
 function reconcileOverrides(){
   PERYEAR_KEYS.forEach(k=>{
-    if(!overrides[k]) return;
-    const a=overrides[k].slice(0,NY);
-    for(let t=a.length;t<NY;t++) a.push(autoVal(k,t));
-    overrides[k]=a;
+    const o=ovNorm(overrides[k]); if(!o) return;
+    if(o.kind==='values'){
+      const a=o.v.slice(0,NY);
+      for(let t=a.length;t<NY;t++) a.push(autoVal(k,t));
+      o.v=a;
+    }else{
+      const a=o.r.slice(0,NY);
+      for(let t=a.length;t<NY;t++) a.push(a.length?a[a.length-1]:0);
+      o.r=a;
+    }
+    overrides[k]=o;
   });
 }
 const ovRound = v => Math.round(v*100)/100;
 
+// ============================================================
+//  SAISIE « PAR ANNÉE » — socle commun aux hypothèses ET aux paramètres de décision
+//  Deux modes : VALEURS (un montant par année) ou CROISSANCE (un taux par année,
+//  chaîné sur l'année PRÉCÉDENTE — « +10 % en N+1 et N+2, puis +5 % » se lit directement).
+//  L'absence d'override = trajectoire auto (valeur en N + croissance unique).
+// ============================================================
+function ovNorm(o){
+  if(!o) return null;
+  if(Array.isArray(o)) return {kind:'values', v:o.slice()};        // ancien format (tableau nu)
+  if(o.kind==='rates')  return {kind:'rates',  r:(o.r||[]).slice()};
+  if(o.kind==='values') return {kind:'values', v:(o.v||[]).slice()};
+  return null;
+}
+// développe un override en série de NY valeurs. `base` = valeur en N (point de départ du mode croissance).
+function ovSeries(o, base){
+  const n=ovNorm(o); if(!n) return null;
+  const out=new Array(NY).fill(0);
+  if(n.kind==='values'){
+    for(let t=0;t<NY;t++){
+      const v=n.v[t];
+      out[t] = (v!=null && v!=='' && isFinite(+v)) ? +v : (t>0? out[t-1] : (+base||0));
+    }
+    return out;
+  }
+  out[0]=+base||0;                                   // r[0] n'est pas utilisé : rien ne précède N
+  for(let t=1;t<NY;t++){
+    const r=(n.r[t]!=null && isFinite(+n.r[t]))? +n.r[t] : 0;
+    out[t]=out[t-1]*(1+r/100);
+  }
+  return out;
+}
+const ovKind = o => (ovNorm(o)||{}).kind || null;
+
 // ---- Modale « gérer année par année » (partagée par tous les paramètres overridables) ----
-let ymKey=null;
+// Un CONTEXTE la rend indépendante de la source : hypothèses globales (overrides[key])
+// ou paramètre d'une décision (ins.vals[key]). Mêmes modes, mêmes règles, deux stockages.
+let ymKey=null, ymCtx=null;
+function ymGet(){ return ymCtx? ymCtx.get() : null; }
+function ymSet(o){ if(ymCtx) ymCtx.set(o); }
+function ymBase(){ return ymCtx? (+ymCtx.base()||0) : 0; }
+function ymAutoAt(t){ return (ymCtx&&ymCtx.auto)? ymCtx.auto(t) : ymBase(); }
+function ymItem(){ return (ymCtx&&ymCtx.it)? ymCtx.it : {kind:'num', step:1}; }
+function ymCurSerie(){ return ovSeries(ymGet(), ymBase()) || Array.from({length:NY},(_,t)=>ymAutoAt(t)); }
 function buildYearModal(){
   const m=document.createElement('div'); m.className='modal-overlay'; m.id='yearModal';
   m.innerHTML=`<div class="modal" style="max-width:560px">
@@ -361,13 +490,15 @@ function buildYearModal(){
     <p class="modal-sub" id="ymSub"></p>
     <div class="ym-mode">
       <button class="loan-modebtn" id="ymAuto">Trajectoire auto</button>
-      <button class="loan-modebtn" id="ymCustom">Personnalisé par année</button>
+      <button class="loan-modebtn" id="ymValues">Valeurs</button>
+      <button class="loan-modebtn" id="ymRates">Croissance</button>
     </div>
     <div id="ymBody" hidden>
-      <div class="ym-apply">Appliquer à toutes les années :
+      <div class="ym-apply"><span id="ymApplyLab">Appliquer à toutes les années :</span>
         <input type="number" id="ymAll" class="numfield">
         <button class="scn-btn" id="ymApplyAll" style="width:auto;padding:6px 12px">Appliquer</button></div>
       <div id="ymYears" class="ym-years"></div>
+      <p class="ym-hint" id="ymHint"></p>
     </div>
     <div class="modal-foot"><span id="ymInfo"></span><button class="btn-primary" id="ymDone">Terminé</button></div>
   </div>`;
@@ -375,36 +506,108 @@ function buildYearModal(){
   document.getElementById('ymClose').addEventListener('click',()=>m.classList.remove('open'));
   document.getElementById('ymDone').addEventListener('click',()=>m.classList.remove('open'));
   m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); });
-  document.getElementById('ymAuto').addEventListener('click',()=>{ delete overrides[ymKey]; renderYearModal(); refresh(); });
-  document.getElementById('ymCustom').addEventListener('click',()=>{
-    if(!overrides[ymKey]) overrides[ymKey]=Array.from({length:NY},(_,t)=>ovRound(autoVal(ymKey,t)));
+  document.getElementById('ymAuto').addEventListener('click',()=>{ ymSet(null); renderYearModal(); refresh(); });
+  document.getElementById('ymValues').addEventListener('click',()=>{
+    if(ovKind(ymGet())!=='values'){
+      // on part de la trajectoire actuellement affichée : passer d'un mode à l'autre ne doit rien casser
+      ymSet({kind:'values', v:ymCurSerie().map(ovRound), base:ymBase()});
+    }
+    renderYearModal(); refresh();
+  });
+  document.getElementById('ymRates').addEventListener('click',()=>{
+    if(ovKind(ymGet())!=='rates'){
+      // taux implicites de la trajectoire courante : on repart de ce qui est déjà à l'écran
+      const cur=ymCurSerie(), r=new Array(NY).fill(0);
+      for(let t=1;t<NY;t++) r[t]= cur[t-1]? ovRound((cur[t]/cur[t-1]-1)*100) : 0;
+      ymSet({kind:'rates', r, base:cur[0]});
+    }
     renderYearModal(); refresh();
   });
   document.getElementById('ymApplyAll').addEventListener('click',()=>{
     const v=parseFloat(document.getElementById('ymAll').value);
-    if(!isNaN(v) && overrides[ymKey]){ overrides[ymKey]=overrides[ymKey].map(()=>v); renderYearModal(); refresh(); }
+    const o=ovNorm(ymGet());
+    if(isNaN(v)||!o) return;
+    if(o.kind==='rates'){ for(let t=1;t<NY;t++) o.r[t]=v; o.r[0]=0; }   // « +5 % par an » = un seul taux partout
+    else o.v=o.v.map(()=>v);
+    o.base=ymBase(); ymSet(o); renderYearModal(); refresh();
   });
 }
+// formate une valeur d'override selon la nature du paramètre (pour l'aperçu du mode croissance)
+function fmtOv(v,it){
+  if(!isFinite(v)) return '—';
+  if(it.kind==='money') return fEUR(v);
+  if(it.kind==='pct')   return (Math.round(v*100)/100).toString().replace('.',',')+' %';
+  if(it.kind==='days')  return Math.round(v)+' j';
+  return (Math.round(v*100)/100).toString().replace('.',',');
+}
+// hypothèse globale : la source est overrides[key], la trajectoire de référence est autoVal()
 function openYearModal(key){
-  ymKey=key; const it=ITEM[key];
-  const unit=it.kind==='pct'?' (en %)':it.kind==='money'?' (en €)':it.kind==='days'?' (en jours)':'';
-  document.getElementById('ymTitle').textContent=it.lab;
-  document.getElementById('ymSub').innerHTML=`Laisse la <b>trajectoire auto</b> (base + croissance ou constante), ou passe en <b>personnalisé</b> pour saisir une valeur par année${unit}.`;
+  ymKey=key;
+  const it=ITEM[key];
+  openYM({
+    lab:it.lab, it,
+    get:()=>overrides[key],
+    set:o=>{ if(o) overrides[key]=o; else delete overrides[key]; },
+    base:()=>autoVal(key,0),
+    auto:t=>autoVal(key,t)
+  });
+}
+// paramètre d'une décision : la source est ins.vals[pk], la référence est la valeur saisie (constante)
+function openDecYearModal(insId,pk){
+  const ins=decInstances.find(i=>i.id===insId); if(!ins) return;
+  const p=decType(ins.type).params.find(x=>x.key===pk); if(!p) return;
+  syncDecFromDOM();
+  ymKey=insId+'.'+pk;
+  const scal=()=>{ const v=ins.vals[pk]; return (v&&typeof v==='object')? (+v.base||0) : (parseFloat(v)||0); };
+  openYM({
+    lab:p.lab+' — '+(ins.nom||''), it:{kind:p.kind, step:p.step},
+    get:()=>{ const v=ins.vals[pk]; return (v&&typeof v==='object')? v : null; },
+    set:o=>{ ins.vals[pk] = o ? o : scal(); buildDecisions(); },
+    base:scal,
+    auto:()=>scal()
+  });
+}
+function openYM(ctx){
+  ymCtx=ctx;
+  const it=ctx.it;
+  const unit=it.kind==='pct'?' en %':it.kind==='money'?' en €':it.kind==='days'?' en jours':'';
+  document.getElementById('ymTitle').textContent=ctx.lab;
+  document.getElementById('ymSub').innerHTML=`Trois façons de piloter ce paramètre : la <b>trajectoire auto</b> (valeur en N + croissance), des <b>valeurs</b> saisies une par une${unit}, ou des <b>taux de croissance</b> année par année — utile quand la progression n'est pas linéaire (forte montée, puis palier).`;
   renderYearModal();
   document.getElementById('yearModal').classList.add('open');
 }
+// met à jour les valeurs calculées affichées à droite des taux, sans reconstruire les champs
+// (une reconstruction ferait perdre le focus à chaque frappe)
+function updateYmPreview(){
+  const it=ymItem(), serie=ovSeries(ymGet(), ymBase());
+  if(!serie) return;
+  document.querySelectorAll('#ymYears .ym-prev').forEach(e=>{ e.textContent=fmtOv(serie[+e.dataset.t],it); });
+}
 function renderYearModal(){
-  const key=ymKey, custom=!!overrides[key];
-  document.getElementById('ymAuto').classList.toggle('on',!custom);
-  document.getElementById('ymCustom').classList.toggle('on',custom);
-  document.getElementById('ymBody').hidden=!custom;
-  if(!custom) return;
-  const arr=overrides[key];
-  document.getElementById('ymYears').innerHTML=ANNEES.map((a,t)=>`
-    <label class="ym-year"><span>${a}</span>
-      <input type="number" class="numfield ym-in" data-t="${t}" step="${ITEM[key].step}" value="${arr[t]}"></label>`).join('');
-  document.getElementById('ymYears').querySelectorAll('.ym-in').forEach(inp=>inp.addEventListener('input',()=>{
-    overrides[key][+inp.dataset.t]=parseFloat(inp.value)||0; refresh();
+  const o=ovNorm(ymGet()), kind=o?o.kind:null, it=ymItem();
+  document.getElementById('ymAuto').classList.toggle('on',!kind);
+  document.getElementById('ymValues').classList.toggle('on',kind==='values');
+  document.getElementById('ymRates').classList.toggle('on',kind==='rates');
+  document.getElementById('ymBody').hidden=!kind;
+  if(!kind) return;
+  const rates=(kind==='rates'), arr=rates?o.r:o.v, serie=ovSeries(ymGet(), ymBase());
+  document.getElementById('ymApplyLab').textContent = rates
+    ? 'Appliquer ce taux à toutes les années :' : 'Appliquer à toutes les années :';
+  document.getElementById('ymHint').textContent = rates
+    ? 'Chaque taux s’applique à l’année précédente. ' + ANNEES[0] + ' est la valeur de départ : rien ne la précède.'
+    : '';
+  document.getElementById('ymYears').innerHTML=ANNEES.map((a,t)=>{
+    if(rates && t===0)
+      return `<label class="ym-year ym-year-base"><span>${a}</span><b class="ym-prev" data-t="0">${fmtOv(serie[0],it)}</b></label>`;
+    return `<label class="ym-year"><span>${a}</span>
+      <input type="number" class="numfield ym-in" data-t="${t}" step="${rates?0.5:it.step}" value="${arr[t]!=null?arr[t]:0}">
+      ${rates?'<i class="ym-unit">%</i><em class="ym-prev" data-t="'+t+'">'+fmtOv(serie[t],it)+'</em>':''}</label>`;
+  }).join('');
+  document.querySelectorAll('#ymYears .ym-in').forEach(inp=>inp.addEventListener('input',()=>{
+    const cur=ovNorm(ymGet()); if(!cur) return;
+    const t=+inp.dataset.t, v=parseFloat(inp.value);
+    if(cur.kind==='rates') cur.r[t]=isNaN(v)?0:v; else cur.v[t]=isNaN(v)?0:v;
+    cur.base=ymBase(); ymSet(cur); updateYmPreview(); refresh();
   }));
 }
 
@@ -414,6 +617,10 @@ function buildDrivers(H){
   const volMult=A().fill(1);   // multiplicateur de volume commun (décisions gamme / usine / cession)
   // canaux d'injection « haut de bilan » alimentés par les décisions (capital / rachat / cession)
   const equityInj=A(),gainCession=A(),nbvCession=A(),proceedsCession=A();
+  // poches d'amortissement à durée SPÉCIFIQUE : {annee, montant, duree}. Un bâtiment s'amortit
+  // sur 20-30 ans, pas sur la durée moyenne du parc — les mélanger écraserait le résultat des
+  // premières années. Le CAPEX courant reste, lui, dans `capex` (durée globale H.duree).
+  const capexL=[];
   const ov=H.ov||{};
   // séries par référence (avant multiplicateur de volume) : volume, prix, coût unitaire
   const rs=(H.refs&&H.refs.length)?H.refs:engineRefs(REFS_DEF);
@@ -434,7 +641,7 @@ function buildDrivers(H){
     perso[t] = ov.persoN? ov.persoN[t]: H.persoN* Math.pow(1+H.gPerso,t);
     capex[t] = ov.capex ? ov.capex[t] : H.capex;
   }
-  return {ca,chgv,refB,volMult,cf,perso,capex,equityInj,gainCession,nbvCession,proceedsCession};
+  return {ca,chgv,refB,volMult,cf,perso,capex,capexL,equityInj,gainCession,nbvCession,proceedsCession};
 }
 
 function compute(H, decisions){
@@ -481,6 +688,11 @@ function compute(H, decisions){
   const openTreso = cpOuv0Eff + fin.detteOuv[0] - H.immoOuv0 - BFRouv;
   let grossOuv=0;   // valeur brute cumulée des immos à l'ouverture (amortissement linéaire)
   let deficit=0;    // stock de déficit reportable (report des pertes sur l'IS futur)
+  // --- poches d'amortissement à durée spécifique (décision « Ouvrir un site ») ---
+  // suivies à part de la poche générique : `immoGen` = VNC du parc courant, `vncL` = VNC des poches.
+  const poches=(drv.capexL||[]).map(p=>({annee:p.annee|0, montant:+p.montant||0, duree:Math.max(1,+p.duree||1), cum:0}));
+  const capexTot=A();
+  let immoGen=H.immoOuv0, vncL=0;
 
   for(let t=0;t<N;t++){
     CA[t]   = drv.ca[t]  *drv.volMult[t];   // somme des références × multiplicateur de volume (décisions)
@@ -488,13 +700,29 @@ function compute(H, decisions){
     marge[t]= CA[t]-chgv[t];
     EBITDA[t]= marge[t]-drv.cf[t]-drv.perso[t];
     // immos (tableau roulant) — amortissement linéaire classique (valeur brute cumulée / durée)
-    immoOuv[t]  = t===0 ? H.immoOuv0 : immoClot[t-1];
+    // Poche GÉNÉRIQUE (parc courant, durée H.duree) :
+    const immoGenOuv=immoGen;
     grossOuv    = t===0 ? H.immoOuv0 : grossOuv + drv.capex[t-1];
     grossOuv    = Math.max(0, grossOuv - drv.nbvCession[t]);  // cession : sort la base amortissable des actifs cédés
-    let dotT    = grossOuv/H.duree;
-    dotT        = Math.min(dotT, immoOuv[t]+drv.capex[t]);   // jamais en dessous de 0 de valeur nette
-    dot[t]      = dotT;
-    immoClot[t] = immoOuv[t] + drv.capex[t] - dot[t] - drv.nbvCession[t];
+    let dotGen  = grossOuv/H.duree;
+    dotGen      = Math.min(dotGen, immoGenOuv+drv.capex[t]);  // jamais en dessous de 0 de valeur nette
+    immoGen     = immoGenOuv + drv.capex[t] - dotGen - drv.nbvCession[t];
+    // Poches à durée SPÉCIFIQUE : comme la poche générique, le CAPEX de l'année t
+    // ne commence à s'amortir qu'en t+1 (même convention, sinon le bilan diverge).
+    const vncLOuv=vncL;
+    let capexLt=0, dotL=0;
+    poches.forEach(p=>{
+      if(t===p.annee) capexLt += p.montant;
+      if(t>p.annee && p.cum<p.montant){
+        const d=Math.min(p.montant/p.duree, p.montant-p.cum);
+        p.cum+=d; dotL+=d;
+      }
+    });
+    vncL        = vncLOuv + capexLt - dotL;
+    capexTot[t] = drv.capex[t] + capexLt;
+    immoOuv[t]  = immoGenOuv + vncLOuv;
+    dot[t]      = dotGen + dotL;
+    immoClot[t] = immoGen + vncL;
     EBIT[t]     = EBITDA[t]-dot[t];
     // dette — portefeuille d'emprunts en annuités constantes (intérêts sur solde d'ouverture, agrégés).
     detteOuv[t]  = fin.detteOuv[t];
@@ -524,7 +752,7 @@ function compute(H, decisions){
     cpClot[t]= cpOuv[t] + RN[t] - div[t] + drv.equityInj[t];   // variation de capital (ouverture + / rachat −)
     // tableau de flux (méthode indirecte)
     fExpl[t] = RN[t] + dot[t] - varBFR[t] - drv.gainCession[t];   // la plus-value de cession n'est pas un flux d'exploitation
-    fInv[t]  = -drv.capex[t] + drv.proceedsCession[t];            // + encaissement du prix de cession
+    fInv[t]  = -capexTot[t] + drv.proceedsCession[t];             // + encaissement du prix de cession
     fFin[t]  = fin.nouvelEmp[t] - fin.capital[t] - div[t] + drv.equityInj[t];   // + ouverture de capital / − rachat de parts
     varTreso[t]= fExpl[t]+fInv[t]+fFin[t];
     tresoOuv[t]= t===0 ? openTreso : tresoClot[t-1];
@@ -550,8 +778,8 @@ function compute(H, decisions){
     for(let t=0;t<N;t++){ rvol[t]=rb.vol[t]*drv.volMult[t]; rca[t]=rvol[t]*rb.prix[t]; rmarge[t]=rvol[t]*(rb.prix[t]-rb.cout[t]); }
     return {nom:rb.nom, ca:rca, vol:rvol, prix:rb.prix.slice(), cout:rb.cout.slice(), marge:rmarge};
   });
-  Object.assign(R,{CA,chgv,marge,cf:drv.cf,perso:drv.perso,capex:drv.capex,EBITDA,dot,EBIT,chgfin,resExcept:drv.gainCession,RAI,IS,RN,div,BFR,varBFR,
-    tresoClot,detteOuv,detteClot,detteNette,levier,ROCE,bfrJours,croiss,margeEBITDA,pointMort,margeSecu,ctrl,fin,refSeries,openTreso,
+  Object.assign(R,{CA,chgv,marge,cf:drv.cf,perso:drv.perso,capex:capexTot,EBITDA,dot,EBIT,chgfin,resExcept:drv.gainCession,RAI,IS,RN,div,BFR,varBFR,
+    cpClot,tresoClot,detteOuv,detteClot,detteNette,levier,ROCE,bfrJours,croiss,margeEBITDA,pointMort,margeSecu,ctrl,fin,refSeries,openTreso,
     funding:{mode:(H.openMode||'treso'), besoin:besoinFin, emprunt:emprAmor, apport:apportCap}});
   return R;
 }
@@ -701,7 +929,10 @@ function readH(){
   H.loans = financeLoans;
   H.refs = engineRefs(refs);   // références produits (unités moteur)
   H.ov = {};   // overrides par année (unités moteur : pct /100)
-  PERYEAR_KEYS.forEach(k=>{ if(overrides[k]){ const pct=ITEM[k].kind==='pct'; H.ov[k]=overrides[k].slice(0,NY).map(v=> pct? v/100 : v); } });
+  PERYEAR_KEYS.forEach(k=>{
+    const s=ovSeries(overrides[k], autoVal(k,0));
+    if(s){ const pct=ITEM[k].kind==='pct'; H.ov[k]= pct? s.map(v=>v/100) : s; }
+  });
   H.openMode=openMode; H.fund={...fund};
   return H;
 }
@@ -713,21 +944,45 @@ function setVal(key,val){
 // ============================================================
 //  CONTRÔLES — décisions
 // ============================================================
+// noms des références connues : celles saisies à la main + celles créées par les décisions
+// « gamme » actives. Lu sans passer par decisionRefs() pour ne pas resynchroniser le DOM en plein rendu.
+function knownRefNames(){
+  const n=refs.map(r=>r.nom||'Référence');
+  decInstances.filter(i=>i.active && i.type==='gamme').forEach(i=>n.push(i.nom||'Nouvelle gamme'));
+  return n.filter((x,i)=>n.indexOf(x)===i);
+}
 function decParamHTML(dk,p,val){
   const v=(val!=null && val!=='')? val : p.v;
   const id='dp_'+dk+'_'+p.key;
+  // ventilation par référence : un pourcentage de baisse propre à chaque référence
+  if(p.kind==='refsplit'){
+    const cur=(val && typeof val==='object')? val : {};
+    const names=knownRefNames();
+    const rows=names.map(n=>`<label class="dp-ref"><span>${escAttr(n)}</span>
+        <input type="number" class="numfield dp-refin" data-dk="${dk}" data-ref="${escAttr(n)}"
+               min="0" max="100" step="5" value="${+cur[n]||0}"><i>%</i></label>`).join('');
+    return `<div class="dp dp-split"><label>${p.lab}</label>
+      <div class="dp-refs">${rows||'<span class="dp-none">Aucune référence à céder.</span>'}</div></div>`;
+  }
   if(p.kind==='year'){
     const cur=Math.min(parseInt(v,10)||0, NY-1);
     const opts=ANNEES.map((a,i)=>`<option value="${i}" ${i===cur?'selected':''}>${a}</option>`).join('');
     return `<div class="dp"><label>${p.lab}</label><select id="${id}">${opts}</select></div>`;
   }
   const suf=p.kind==='pct'?' %':'';
+  const yr = p.per?`<button type="button" class="yr-btn dp-yr" data-dk="${dk}" data-pk="${p.key}" title="Gérer année par année">an</button>`:'';
+  // paramètre passé « par année » : la modale le pilote, on n'affiche plus de champ unique
+  if(val && typeof val==='object' && (val.kind==='values'||val.kind==='rates')){
+    const lib = val.kind==='rates' ? 'croissance par année' : 'valeurs par année';
+    return `<div class="dp dp-per"><label>${p.lab}${suf?' ('+suf.trim()+')':''}</label>
+       <span class="dp-pertag">${lib}</span>${yr}</div>`;
+  }
   return `<div class="dp"><label>${p.lab}${suf?' ('+suf.trim()+')':''}</label>
      <div class="stepper">
        <button type="button" class="st-btn dp-btn" data-dk="${dk}" data-pk="${p.key}" data-d="-1">−</button>
        <input type="number" id="${id}" class="numfield" value="${v}" min="${p.min}" max="${p.max}" step="${p.step}">
        <button type="button" class="st-btn dp-btn" data-dk="${dk}" data-pk="${p.key}" data-d="1">+</button>
-     </div></div>`;
+     </div>${yr}</div>`;
 }
 function decCardHTML(ins){
   const t=decType(ins.type);
@@ -765,7 +1020,11 @@ function buildDecisions(){
       const el=document.getElementById('dp_'+ins.id+'_'+p.key);
       if(el) el.addEventListener('input',refresh);
     });
+    // champs de ventilation par référence (un input par référence, pas d'id unique)
+    if(body) body.querySelectorAll('.dp-refin').forEach(inp=>inp.addEventListener('input',refresh));
   });
+  // bouton « an » des paramètres de décision : ouvre la modale par année sur ce paramètre
+  root.querySelectorAll('.dp-yr').forEach(b=>b.addEventListener('click',()=>openDecYearModal(b.dataset.dk,b.dataset.pk)));
   // steppers +/- (data-dk = id d'instance, param résolu via son type)
   root.querySelectorAll('.dp-btn').forEach(b=>b.addEventListener('click',()=>{
     const ins=decInstances.find(i=>i.id===b.dataset.dk); if(!ins) return;
@@ -921,16 +1180,56 @@ function refFootHTML(r){
   return `CA en N <b>${fEUR(caN)}</b> · marge sur CV <b>${fEUR(mN)}</b> <span class="ref-tx">(${tx.toFixed(0)} %)</span>`;
 }
 function updateRefFoot(idx){ const f=document.getElementById('refFoot_'+idx); if(f) f.innerHTML=refFootHTML(refs[idx]); }
+// Références créées par les décisions actives de type « gamme ».
+// Elles ne vivent PAS dans `refs` : la décision reste leur SEULE source de vérité.
+// On les affiche donc en LECTURE SEULE — deux endroits de saisie pour les mêmes
+// chiffres finiraient forcément par diverger (la décision réécrit tout au calcul).
+function decisionRefs(){
+  syncDecFromDOM();
+  return decInstances.filter(ins=>ins.active && ins.type==='gamme').map(ins=>{
+    const v=ins.vals||{}, n=k=>(parseFloat(v[k])||0);
+    return {id:ins.id, nom:ins.nom||'Nouvelle gamme',
+            annee:Math.max(0,Math.min(parseInt(v.annee,10)||0, NY-1)),
+            volN:n('volN'), gVol:n('gVol'), prixN:n('prixN'),
+            gPrix:n('gPrix'), coutN:n('coutN'), gCout:n('gCout')};
+  });
+}
+function decRefCardHTML(d){
+  const lanc=ANNEES[d.annee]||('N+'+d.annee);
+  const ca=d.volN*d.prixN, mg=d.volN*(d.prixN-d.coutN), tx=ca?mg/ca*100:0;
+  const pct=g=>(g>=0?'+':'')+String(g).replace('.',',')+' %/an';
+  const line=(lab,val,g)=>`<div class="dref-m"><span>${lab}</span><b>${val}</b><i>${pct(g)}</i></div>`;
+  return `<div class="ref-card ref-card-ro">
+    <div class="loan-top"><span class="dref-nom">${esc(d.nom)}</span>
+      <span class="dref-tag">issue d'une décision</span></div>
+    <div class="dref-body">
+      ${line('Volume', Math.round(d.volN).toLocaleString('fr-FR'), d.gVol)}
+      ${line('Prix unitaire', fEUR(d.prixN), d.gPrix)}
+      ${line('Coût variable unitaire', fEUR(d.coutN), d.gCout)}
+    </div>
+    <div class="ref-card-foot">Lancement en <b>${lanc}</b> · la 1ʳᵉ année : CA <b>${fEUR(ca)}</b> · marge <b>${fEUR(mg)}</b> <span class="ref-tx">(${tx.toFixed(0)} %)</span></div>
+    <div class="dref-note">Ces valeurs appartiennent à la décision « ${esc(d.nom)} » : elles se modifient dans sa carte, sous « Décisions à simuler ».</div>
+  </div>`;
+}
 function renderRefList(){
   const root=document.getElementById('refList'); if(!root) return;
-  root.innerHTML = refs.length ? refs.map((r,i)=>refCardHTML(r,i)).join('')
+  const dr=decisionRefs();
+  const own = refs.length ? refs.map((r,i)=>refCardHTML(r,i)).join('')
     : '<div class="scn-empty">Aucune référence. Ajoutes-en une (sans référence, le CA est nul).</div>';
+  const fromDec = dr.length
+    ? `<div class="dref-sep">Références issues des décisions actives</div>` + dr.map(decRefCardHTML).join('')
+    : '';
+  root.innerHTML = own + fromDec;
   refs.forEach((r,i)=>updateRefFoot(i));
 }
 function refSummary(){
   let caN=0,mN=0; refs.forEach(r=>{ const v=refN(r,'volN','volOv'), p=refN(r,'prixN','prixOv'), c=refN(r,'coutN','coutOv'); caN+=v*p; mN+=v*(p-c); });
   const tx=caN?(mN/caN*100):0;
-  const txt=`${refs.length} référence${refs.length>1?'s':''} · CA en N <b>${fEUR(caN)}</b> · marge <b>${fEUR(mN)}</b> <span class="ref-tx">(${tx.toFixed(0)} %)</span>`;
+  // les références issues des décisions sont comptées à part : elles démarrent souvent après N,
+  // les agréger au « CA en N » donnerait un total trompeur.
+  const nd=(typeof decInstances!=='undefined') ? decInstances.filter(i=>i.active&&i.type==='gamme').length : 0;
+  const suf=nd?` <span class="ref-tx">+ ${nd} issue${nd>1?'s':''} des décisions</span>`:'';
+  const txt=`${refs.length} référence${refs.length>1?'s':''} · CA en N <b>${fEUR(caN)}</b> · marge <b>${fEUR(mN)}</b> <span class="ref-tx">(${tx.toFixed(0)} %)</span>${suf}`;
   const a=document.getElementById('refModalSum'); if(a) a.innerHTML=txt;
   const b=document.getElementById('refSummaryPanel'); if(b) b.innerHTML=txt;
 }
@@ -957,7 +1256,12 @@ function buildRefModal(){
     const b=e.target.closest('button'); if(!b) return;
     if(b.classList.contains('ref-st')){
       const idx=+b.dataset.idx, f=b.dataset.field, step=parseFloat(b.dataset.step), d=parseInt(b.dataset.d,10);
-      let v=(parseFloat(refs[idx][f])||0)+d*step; v=Math.max(0, parseFloat(v.toFixed(6))); refs[idx][f]=v;
+      // les CROISSANCES (gVol/gPrix/gCout) peuvent être négatives — coût variable qui baisse,
+      // volume d'un produit mature qui décline. Seules les valeurs de base restent ≥ 0.
+      const isGrowth=/^g[A-Z]/.test(f);
+      let v=(parseFloat(refs[idx][f])||0)+d*step; v=parseFloat(v.toFixed(6));
+      if(!isGrowth) v=Math.max(0,v);
+      refs[idx][f]=v;
       const num=root.querySelector(`.ref-num[data-idx="${idx}"][data-field="${f}"]`); if(num) num.value=v;
       updateRefFoot(idx); refSummary(); refresh();
     } else if(b.classList.contains('ref-yr')){
@@ -973,7 +1277,9 @@ function buildRefModal(){
     refs.push({id:'r'+Date.now(), nom:'Nouvelle référence', volN:2000, gVol:5, prixN:60, gPrix:2, coutN:30, gCout:2, volOv:null, prixOv:null, coutOv:null});
     renderRefList(); refSummary(); refresh();
   });
-  document.getElementById('refOpen').addEventListener('click',()=>modal.classList.add('open'));
+  // re-rendu à l'ouverture : les références issues des décisions doivent refléter
+  // l'état courant des cartes de décision, qui a pu changer depuis le dernier rendu.
+  document.getElementById('refOpen').addEventListener('click',()=>{ renderRefList(); refSummary(); modal.classList.add('open'); });
   document.getElementById('refClose').addEventListener('click',()=>modal.classList.remove('open'));
   document.getElementById('refDone').addEventListener('click',()=>modal.classList.remove('open'));
   modal.addEventListener('click',e=>{ if(e.target===modal) modal.classList.remove('open'); });
@@ -1119,6 +1425,16 @@ function diagnose(R,H){
     F.push({level:'critical',titre:'Trou de trésorerie',
       constat:`La trésorerie plonge à <b>${fEUR(pointBas)}</b> en ${yBas}. Sans financement, l'entreprise est en cessation de paiement.`,
       levier:`Sécuriser une ligne de crédit d'au moins <b>${fEUR(besoin)}</b> avant ${yBas}. Autres leviers : étaler le CAPEX, ou réduire le DSO — chaque 10 jours de délai clients en moins libère ~${fEUR(R.CA[last]*10/365)} de cash.`});
+  }
+
+  // 1bis. Capitaux propres négatifs — souvent provoqué par un rachat de parts trop lourd,
+  // ou par des pertes cumulées. Signal juridique fort, distinct du trou de trésorerie.
+  const cp=R.cpClot||[];
+  const cpNeg=cp.findIndex(x=>x<0);
+  if(cpNeg>=0){
+    F.push({level:'critical',titre:'Capitaux propres négatifs',
+      constat:`Les capitaux propres deviennent négatifs en ${ANNEES[cpNeg]} (<b>${fEUR(cp[cpNeg])}</b>). L'entreprise doit plus qu'elle ne possède : en France, les associés doivent alors se prononcer sur la poursuite de l'activité.`,
+      levier:`Réduire ou décaler le rachat de parts et les dividendes, ou reconstituer les fonds propres par une ouverture de capital. Un prêteur refusera de financer une structure aux capitaux propres négatifs.`});
   }
 
   // 2. Endettement élevé
@@ -1643,7 +1959,11 @@ function computeFromState(s){
   H.loans = Array.isArray(s.loans) ? s.loans : LOANS_DEF;
   H.refs = engineRefs(migrateRefsFromState(s));   // références (nouveau format) ou migration mono-produit
   H.ov={};
-  if(s.ov) PERYEAR_KEYS.forEach(k=>{ if(s.ov[k]&&s.ov[k].length){ const pct=ITEM[k].kind==='pct'; const a=s.ov[k].slice(0,NY).map(v=> pct? v/100 : v); while(a.length<NY) a.push(a[a.length-1]); H.ov[k]=a; } });
+  if(s.ov) PERYEAR_KEYS.forEach(k=>{
+    // base en N : reprise de l'état sauvegardé, pas des champs à l'écran
+    const a=ovSeries(s.ov[k], (s.H&&s.H[k]!=null)? s.H[k] : autoVal(k,0));
+    if(a){ const pct=ITEM[k].kind==='pct'; H.ov[k]= pct? a.map(v=>v/100) : a; }
+  });
   const decs=instancesFromState(s).map(toEngineDec);
   return compute(H, decs);
 }
