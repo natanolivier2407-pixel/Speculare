@@ -346,7 +346,11 @@ function toEngineDec(ins){
     // trajectoire « par année » : développée à partir de la valeur en N saisie dans le champ,
     // qui reste donc pleinement modifiable même en mode croissance.
     const o = ins.ov && ins.ov[p.key];
-    if(o){ const s=ovSeries(o, v); if(s){ vals.__s=vals.__s||{}; vals.__s[p.key]=s.map(x=>x/div); } }
+    if(o){
+      const t0=parseInt(ins.vals.annee,10)||0;   // la trajectoire démarre à l'année de la décision
+      const s=ovSeries(o, v, t0);
+      if(s){ vals.__s=vals.__s||{}; vals.__s[p.key]=s.map(x=>x/div); }
+    }
   });
   return {id:ins.id, type:ins.type, nom:(ins.nom||t.label), active:!!ins.active, vals, apply:t.apply, applyLoan:t.applyLoan};
 }
@@ -446,9 +450,12 @@ function ovNorm(o){
   if(o.kind==='values') return {kind:'values', mode:o.mode||'const', base:o.base, v:(o.v||[]).slice()};
   return null;
 }
-// développe un override en série de NY valeurs. `base` = valeur en N (point de départ du mode croissance).
-function ovSeries(o, base){
+// développe un override en série de NY valeurs.
+// `base` = valeur de départ ; `t0` = année où la trajectoire démarre (0 pour une hypothèse,
+// l'année de la décision pour un paramètre de décision — une gamme lancée en N+2 part de N+2).
+function ovSeries(o, base, t0){
   const n=ovNorm(o); if(!n) return null;
+  const s=Math.min(NY-1, Math.max(0, t0|0));
   const out=new Array(NY).fill(0);
   if(n.kind==='values'){
     for(let t=0;t<NY;t++){
@@ -457,8 +464,8 @@ function ovSeries(o, base){
     }
     return out;
   }
-  out[0]=+base||0;                                   // r[0] n'est pas utilisé : rien ne précède N
-  for(let t=1;t<NY;t++){
+  for(let t=0;t<=s;t++) out[t]=+base||0;             // rien ne précède l'année de départ
+  for(let t=s+1;t<NY;t++){
     const r=(n.r[t]!=null && isFinite(+n.r[t]))? +n.r[t] : 0;
     out[t]=out[t-1]*(1+r/100);
   }
@@ -473,9 +480,11 @@ let ymKey=null, ymCtx=null;
 function ymGet(){ return ymCtx? ymCtx.get() : null; }
 function ymSet(o){ if(ymCtx) ymCtx.set(o); }
 function ymBase(){ return ymCtx? (+ymCtx.base()||0) : 0; }
+function ymSetBase(v){ if(ymCtx&&ymCtx.setBase) ymCtx.setBase(v); }
+function ymT0(){ return (ymCtx&&ymCtx.t0)? Math.min(NY-1, Math.max(0, ymCtx.t0()|0)) : 0; }
 function ymAutoAt(t){ return (ymCtx&&ymCtx.auto)? ymCtx.auto(t) : ymBase(); }
 function ymItem(){ return (ymCtx&&ymCtx.it)? ymCtx.it : {kind:'num', step:1}; }
-function ymCurSerie(){ return ovSeries(ymGet(), ymBase()) || Array.from({length:NY},(_,t)=>ymAutoAt(t)); }
+function ymCurSerie(){ return ovSeries(ymGet(), ymBase(), ymT0()) || Array.from({length:NY},(_,t)=>ymAutoAt(t)); }
 function buildYearModal(){
   const m=document.createElement('div'); m.className='modal-overlay'; m.id='yearModal';
   m.innerHTML=`<div class="modal" style="max-width:560px">
@@ -504,49 +513,42 @@ function buildYearModal(){
   document.getElementById('ymDone').addEventListener('click',()=>m.classList.remove('open'));
   m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); });
   // --- mode : VALEUR ou CROISSANCE (on repart toujours de la trajectoire affichée) ---
-  document.getElementById('ymValues').addEventListener('click',()=>{
-    if(ymKindNow()!=='values'){
-      const o=ovNorm(ymGet());
-      ymSet({kind:'values', mode:(o&&o.mode)||'const', v:ymCurSerie().map(ovRound), base:ymBase()});
-    }
-    renderYearModal(); refresh();
-  });
-  document.getElementById('ymRates').addEventListener('click',()=>{
-    if(ymKindNow()!=='rates'){
-      const cur=ymCurSerie(), r=new Array(NY).fill(0), o=ovNorm(ymGet());
-      for(let t=1;t<NY;t++) r[t]= cur[t-1]? ovRound((cur[t]/cur[t-1]-1)*100) : 0;
-      ymSet({kind:'rates', mode:(o&&o.mode)||'const', r, base:cur[0]});
-    }
-    renderYearModal(); refresh();
-  });
+  document.getElementById('ymValues').addEventListener('click',()=>{ ymApply('values', ymModeNow()); });
+  document.getElementById('ymRates').addEventListener('click', ()=>{ ymApply('rates',  ymModeNow()); });
   // --- saisie : IDENTIQUE chaque année, ou une valeur PAR ANNÉE ---
-  document.getElementById('ymConst').addEventListener('click',()=>{ ymSetMode('const'); });
-  document.getElementById('ymYear').addEventListener('click',()=>{ ymSetMode('year'); });
+  document.getElementById('ymConst').addEventListener('click',()=>{ ymApply(ymKindNow(),'const'); });
+  document.getElementById('ymYear').addEventListener('click', ()=>{ ymApply(ymKindNow(),'year'); });
   document.getElementById('ymAll').addEventListener('input',e=>{
     const v=parseFloat(e.target.value); if(isNaN(v)) return;
-    const o=ymEnsure();
-    if(o.kind==='rates'){ for(let t=1;t<NY;t++) o.r[t]=v; o.r[0]=0; }   // un seul taux, appliqué chaque année
-    else o.v=o.v.map(()=>v);
-    o.mode='const'; ymSet(o); updateYmPreview(); refresh();
+    if(ymKindNow()==='values'){
+      ymSetBase(v);            // valeur identique chaque année = c'est le PARAMÈTRE lui-même
+    }else{
+      const o=ovNorm(ymGet()) || {kind:'rates', r:new Array(NY).fill(0)};
+      const t0=ymT0();
+      for(let t=t0+1;t<NY;t++) o.r[t]=v;      // un seul taux, appliqué chaque année
+      for(let t=0;t<=t0;t++) o.r[t]=0;
+      o.mode='const'; ymSet(o);
+    }
+    updateYmPreview(); refresh();
   });
 }
-// mode courant (par défaut : une VALEUR identique chaque année — il n'y a plus de « trajectoire auto »)
-function ymKindNow(){ return ovKind(ymGet()) || 'values'; }
-function ymModeNow(){ const o=ovNorm(ymGet()); return (o&&o.mode)||'const'; }
-// crée l'override à la volée s'il n'existe pas encore (la modale montre toujours un mode actif)
-function ymEnsure(){
-  let o=ovNorm(ymGet());
-  if(!o){ o={kind:'values', mode:'const', v:ymCurSerie().map(ovRound)}; }
-  o.base=ymBase(); return o;
-}
-function ymSetMode(m){
-  const o=ymEnsure(); o.mode=m;
-  if(m==='const'){   // on aplatit sur la 1re valeur saisie pour que « identique » le soit vraiment
-    if(o.kind==='rates'){ const x=o.r[1]||0; for(let t=1;t<NY;t++) o.r[t]=x; o.r[0]=0; }
-    else { const x=o.v[0]||0; o.v=o.v.map(()=>x); }
+// Quatre combinaisons. « Valeur + identique chaque année » n'est PAS un override :
+// c'est le paramètre lui-même, qui doit donc rester pleinement pilotable par son champ.
+function ymApply(kind,mode){
+  const cur=ymCurSerie(), t0=ymT0();
+  if(kind==='values'){
+    if(mode==='const'){ ymSetBase(ovRound(cur[t0])); ymSet(null); }
+    else ymSet({kind:'values', mode:'year', v:cur.map(ovRound)});
+  }else{
+    const r=new Array(NY).fill(0);
+    for(let t=t0+1;t<NY;t++) r[t]= cur[t-1]? ovRound((cur[t]/cur[t-1]-1)*100) : 0;
+    if(mode==='const'){ const x=r[t0+1]||0; for(let t=t0+1;t<NY;t++) r[t]=x; }
+    ymSet({kind:'rates', mode, r});
   }
-  ymSet(o); renderYearModal(); refresh();
+  renderYearModal(); refresh();
 }
+function ymKindNow(){ return ovKind(ymGet()) || 'values'; }
+function ymModeNow(){ const o=ovNorm(ymGet()); return o? (o.mode||'const') : 'const'; }
 // formate une valeur d'override selon la nature du paramètre (pour l'aperçu du mode croissance)
 function fmtOv(v,it){
   if(!isFinite(v)) return '—';
@@ -564,6 +566,7 @@ function openYearModal(key){
     get:()=>overrides[key],
     set:o=>{ if(o) overrides[key]=o; else delete overrides[key]; },
     base:()=>autoVal(key,0),
+    setBase:v=>{ setVal(key,v); paramChanged(key); },
     auto:t=>autoVal(key,t)
   });
 }
@@ -573,12 +576,15 @@ function openDecYearModal(insId,pk){
   const p=decType(ins.type).params.find(x=>x.key===pk); if(!p) return;
   syncDecFromDOM();
   ymKey=insId+'.'+pk;
-  const scal=()=>parseFloat(ins.vals[pk])||0;   // la valeur en N vient du champ, jamais figée dans l'override
+  const scal=()=>parseFloat(ins.vals[pk])||0;   // la valeur de départ vient du champ, jamais figée dans l'override
   openYM({
     lab:p.lab+' — '+(ins.nom||''), it:{kind:p.kind, step:p.step},
     get:()=>(ins.ov&&ins.ov[pk])||null,
     set:o=>{ ins.ov=ins.ov||{}; if(o) ins.ov[pk]=o; else delete ins.ov[pk]; buildDecisions(); },
     base:scal,
+    setBase:v=>{ ins.vals[pk]=v; buildDecisions(); },
+    // la trajectoire démarre à l'année de la décision : une gamme lancée en N+2 part de N+2
+    t0:()=>parseInt(ins.vals.annee,10)||0,
     auto:()=>scal()
   });
 }
@@ -594,6 +600,7 @@ function openRefYearModal(idx,m){
     get:()=>r[ov],
     set:o=>{ r[ov]= o||null; renderRefList(); refSummary(); },
     base:()=>+r[cfg.base]||0,
+    setBase:v=>{ r[cfg.base]=v; renderRefList(); refSummary(); },
     auto:()=>+r[cfg.base]||0
   });
 }
@@ -609,19 +616,18 @@ function openYM(ctx){
 // met à jour les valeurs calculées affichées à droite des taux, sans reconstruire les champs
 // (une reconstruction ferait perdre le focus à chaque frappe)
 function updateYmPreview(){
-  const it=ymItem(), serie=ovSeries(ymGet(), ymBase());
+  const it=ymItem(), serie=ymCurSerie();
   if(!serie) return;
   document.querySelectorAll('#ymYears .ym-prev').forEach(e=>{ e.textContent=fmtOv(serie[+e.dataset.t],it); });
 }
 function renderYearModal(){
-  const kind=ymKindNow(), mode=ymModeNow(), it=ymItem(), rates=(kind==='rates');
+  const kind=ymKindNow(), mode=ymModeNow(), it=ymItem(), rates=(kind==='rates'), t0=ymT0();
   document.getElementById('ymValues').classList.toggle('on',!rates);
   document.getElementById('ymRates').classList.toggle('on',rates);
   document.getElementById('ymConst').classList.toggle('on',mode==='const');
   document.getElementById('ymYear').classList.toggle('on',mode==='year');
-  const o=ymEnsure(), arr=rates?o.r:o.v;
-  const serie=ovSeries(o, ymBase());
-  // ligne « identique chaque année » : un seul champ
+  const o=ovNorm(ymGet()), serie=ymCurSerie();
+  const arr = o ? (rates?o.r:o.v) : serie;
   const constRow=document.getElementById('ymConstRow');
   constRow.hidden=(mode!=='const');
   document.getElementById('ymYears').hidden=(mode==='const');
@@ -630,23 +636,28 @@ function renderYearModal(){
   document.getElementById('ymUnit').textContent = rates ? '%'
     : (it.kind==='money'?'€':it.kind==='days'?'jours':'');
   if(mode==='const'){
-    const cur = rates ? (arr[1]||0) : (arr[0]||0);
+    const cur = rates ? (arr[t0+1]||0) : ovRound(serie[t0]);
     const inp=document.getElementById('ymAll');
     if(document.activeElement!==inp) inp.value=cur;      // ne pas écraser la frappe en cours
     inp.step = rates?0.5:it.step;
   }
   document.getElementById('ymHint').textContent = rates
-    ? 'Chaque taux s’applique à l’année précédente. ' + ANNEES[0] + ' est la valeur de départ : rien ne la précède.'
+    ? 'Chaque taux s’applique à l’année précédente. ' + ANNEES[t0] + ' est la valeur de départ : rien ne la précède.'
     : '';
-  document.getElementById('ymYears').innerHTML=ANNEES.map((a,t)=>{
-    if(rates && t===0)
-      return `<label class="ym-year ym-year-base"><span>${a}</span><b class="ym-prev" data-t="0">${fmtOv(serie[0],it)}</b></label>`;
+  // on n'affiche que les années où le paramètre existe (une gamme lancée en N+2 démarre en N+2)
+  document.getElementById('ymYears').innerHTML=ANNEES.slice(t0).map((a,i)=>{
+    const t=t0+i;
+    if(rates && t===t0)
+      return `<label class="ym-year ym-year-base"><span>${a}</span><b class="ym-prev" data-t="${t}">${fmtOv(serie[t],it)}</b></label>`;
     return `<label class="ym-year"><span>${a}</span>
       <input type="number" class="numfield ym-in" data-t="${t}" step="${rates?0.5:it.step}" value="${arr[t]!=null?arr[t]:0}">
       ${rates?'<i class="ym-unit">%</i><em class="ym-prev" data-t="'+t+'">'+fmtOv(serie[t],it)+'</em>':''}</label>`;
   }).join('');
   document.querySelectorAll('#ymYears .ym-in').forEach(inp=>inp.addEventListener('input',()=>{
-    const cur=ymEnsure();
+    const k=ymKindNow();
+    const cur = ovNorm(ymGet()) || (k==='rates'
+      ? {kind:'rates',  r:new Array(NY).fill(0)}
+      : {kind:'values', v:ymCurSerie().map(ovRound)});
     const t=+inp.dataset.t, v=parseFloat(inp.value);
     if(cur.kind==='rates') cur.r[t]=isNaN(v)?0:v; else cur.v[t]=isNaN(v)?0:v;
     cur.mode='year'; ymSet(cur); updateYmPreview(); refresh();
@@ -1015,11 +1026,12 @@ function decParamHTML(dk,p,val){
   const ins=decInstances.find(i=>i.id===dk);
   const ok=(ins&&ins.ov)?ovKind(ins.ov[p.key]):null;
   const yr = p.per?`<button type="button" class="yr-btn dp-yr ${ok?'on':''}" data-dk="${dk}" data-pk="${p.key}" title="Décrire l'évolution : valeur ou croissance, identique chaque année ou année par année">Évolution</button>`:'';
-  // Le champ reste TOUJOURS affiché : en mode croissance c'est la valeur en N sur laquelle
-  // s'appliquent les taux. Il n'est neutralisé qu'en mode « valeurs », où il perd son sens.
-  const tag = ok ? `<span class="dp-pertag">${ok==='rates'?'croissance':'par année'}</span>` : '';
+  // Le champ reste TOUJOURS affiché : en mode croissance c'est la valeur de départ sur laquelle
+  // s'appliquent les taux. Il n'est neutralisé qu'en « valeurs par année », où il perd son sens.
+  // Pas d'étiquette de mode ici : elle pousserait le bouton « Évolution » hors du cadre —
+  // son état actif (fond bleu) suffit à signaler qu'une trajectoire est définie.
   return `<div class="dp ${ok==='values'?'dp-locked':''}"><label>${p.lab}${suf?' ('+suf.trim()+')':''}</label>
-     ${tag}<div class="stepper">
+     <div class="stepper">
        <button type="button" class="st-btn dp-btn" data-dk="${dk}" data-pk="${p.key}" data-d="-1">−</button>
        <input type="number" id="${id}" class="numfield" value="${v}" min="${p.min}" max="${p.max}" step="${p.step}">
        <button type="button" class="st-btn dp-btn" data-dk="${dk}" data-pk="${p.key}" data-d="1">+</button>
